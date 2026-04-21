@@ -1151,45 +1151,104 @@ async function sendMsg() {
   showTyping();
 
   const biz = BUSINESSES[activeBiz];
+  const q = text.toLowerCase();
 
-  try {
-    const messages = chatHistory.map(m => ({ role: m.role, content: m.content }));
+  // Simulate typing delay (realistic 0.8–1.6s)
+  await new Promise(r => setTimeout(r, 800 + Math.random() * 800));
 
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json",
-          "anthropic-dangerous-direct-browser-ipc": "true" },
-      body: JSON.stringify({
-        model: "claude-opus-4-5",
-        max_tokens: 1000,
-        system: `You are a helpful customer service chatbot for a small business. You ONLY answer based on the business documents provided below. 
+  // Local knowledge-base lookup per business
+  const KB = {
+    0: [ // Café
+      { keys: ['kawa','kawy','espresso','cappuccino','latte','americano','flat','mrożona','bezkofeinow','menu','napój','pić'],
+        ans: 'Oferujemy pełną kartę kaw: espresso 8 zł, americano 10 zł, cappuccino i flat white 14 zł, latte 15 zł, kawa mrożona 17 zł ☕ Do każdej kawy dostępne mleka roślinne (owsiane, sojowe, migdałowe) za +3 zł.' },
+      { keys: ['godzin','open','kiedy','zamknięt','otwarc','hours','weekend','sobota','niedziela'],
+        ans: 'Jesteśmy otwarci: pon–pt 7:30–20:00, sobota 8:00–21:00, niedziela 9:00–20:00 🕐' },
+      { keys: ['rezerwac','stolik','book','reserv','miejsc','zarezerwow'],
+        ans: 'Rezerwacje przyjmujemy telefonicznie: 123-456-789 lub przez formularz na stronie. Minimalna liczba osób: 2, maksymalna: 8 👌' },
+      { keys: ['jedzen','jedzenie','food','toast','croissant','owsianka','ciasto','kanapk','menu jedz'],
+        ans: 'W menu mamy: croissant 9 zł, tost z awokado 22 zł, owsiankę sezonową 18 zł i ciasto dnia 12 zł 🥐' },
+      { keys: ['vegan','wegan','roślin','plant','bez mleka','bez laktozy','wegań'],
+        ans: 'Tak! Wszystkie napoje możesz zamówić z mlekiem owsianym, sojowym lub migdałowym (+3 zł). Tost z awokado i owsianka są w pełni wegańskie 🌱' },
+      { keys: ['wifi','wi-fi','internet','hasło','sieć'],
+        ans: 'Wi-Fi jest bezpłatne dla wszystkich klientów 📶 Hasło znajdziesz na paragonie.' },
+      { keys: ['parking','zaparkow','samochód'],
+        ans: 'Najbliższy parking płatny jest przy ul. Sławkowskiej, około 5 minut pieszo od nas 🚗' },
+      { keys: ['płatnos','płacić','karta','gotówka','blik','cash'],
+        ans: 'Przyjmujemy karty, gotówkę i BLIK 💳' },
+    ],
+    1: [ // Beauty salon
+      { keys: ['manicure','paznokci','hybryda','hybrydowy','żel','przedłużan','paznokcie'],
+        ans: 'Cennik paznokci: manicure klasyczny 80 zł (45 min), hybrydowy 110 zł (60 min), pedicure klasyczny 100 zł, hybrydowy 130 zł 💅 Przedłużanie żelem od 180 zł.' },
+      { keys: ['rzęsy','laminacj','lifting','przedłużan rzęs','objętoś','1:1','2d','3d','4d'],
+        ans: 'Przedłużanie rzęs 1:1 to 200 zł (2h), objętość 2D–4D 280 zł (2,5h), laminacja rzęs 160 zł, lifting 150 zł 👁' },
+      { keys: ['brwi','henna','stylizacj brwi','laminacj brwi'],
+        ans: 'Henna brwi 60 zł, laminacja brwi 130 zł, stylizacja brwi 50 zł ✨' },
+      { keys: ['cena','cennik','ile kosztuje','koszt','price'],
+        ans: 'Manicure od 80 zł, rzęsy od 150 zł, brwi od 50 zł. Pełny cennik chętnie prześlę — napisz jaki zabieg Cię interesuje!' },
+      { keys: ['rezerwac','zapis','termin','book','umów','appointment','kiedy','wolny'],
+        ans: 'Zapisujesz się przez formularz online lub SMS na numer 987-654-321 📱 Pamiętaj o odwołaniu min. 24h wcześniej.' },
+      { keys: ['godzin','open','kiedy','zamknięt','otwarc','hours','weekend'],
+        ans: 'Pracujemy pon–pt 9:00–20:00, sobota 9:00–17:00. W niedzielę jesteśmy zamknięte 🗓' },
+      { keys: ['skóra','twarz','mezoterap','oczyszczan','peeling','zabieg na twarz'],
+        ans: 'Oferujemy oczyszczanie manualne 200 zł (75 min) i mezoterapię igłową 350 zł. Zabiegi na skórę twarzy dostępne po umówieniu 🌸' },
+    ],
+    2: [ // Law firm
+      { keys: ['specjaliz','prawo','dziedzin','czym się zajmuj','co robicie','zakres'],
+        ans: 'Specjalizujemy się w: prawie gospodarczym, prawie pracy, prawie rodzinnym (rozwody, alimenty), prawie nieruchomości, windykacji i prawie spadkowym ⚖️' },
+      { keys: ['konsultacj','spotkanie','wizyta','rozmowa','ile kosztuje','cena','wycen'],
+        ans: 'Pierwsza konsultacja (30 min) kosztuje 200 zł i może odbyć się online lub stacjonarnie. Standardowa godzina to 400 zł. Stała obsługa firm od 1500 zł/miesiąc.' },
+      { keys: ['umów','zapis','termin','book','appointment','kiedy','wolny termin'],
+        ans: 'Terminy można rezerwować przez formularz na stronie lub telefonicznie: 012-345-678. Pracujemy pon–pt 8:00–18:00 📅' },
+      { keys: ['rozwód','alimenty','opieka','rodzin','małżeństwo','rozdzielność'],
+        ans: 'Prowadzimy sprawy z zakresu prawa rodzinnego: rozwody, separacje, alimenty, opieka nad dziećmi, podział majątku. Zapraszamy na konsultację.' },
+      { keys: ['język','english','angielski','deutsch','german'],
+        ans: 'Obsługujemy klientów w języku polskim, angielskim i niemieckim 🌍' },
+      { keys: ['online','zdalnie','video','teams','zoom'],
+        ans: 'Tak, konsultacje online są dostępne. Wystarczy umówić się przez formularz i wybrać opcję "online".' },
+      { keys: ['godzin','open','kiedy','zamknięt','otwarc','hours'],
+        ans: 'Kancelaria jest czynna poniedziałek–piątek 8:00–18:00. Kontakt: kancelaria@nowak-prawnik.pl lub tel. 012-345-678.' },
+    ],
+    3: [ // Gym
+      { keys: ['karnet','cena','cennik','ile kosztuje','miesięczny','roczny','wejście'],
+        ans: 'Karnety: jednorazowe 35 zł, miesięczny open 129 zł, off-peak (6–16) 89 zł, 3-miesięczny 319 zł, roczny 990 zł 💪 Pierwszy trening jest bezpłatny!' },
+      { keys: ['zajęcia','crossfit','yoga','spinning','pilates','zumba','trx','grupow','grafik'],
+        ans: 'Mamy: CrossFit (pon/śr/pt 7:00, 12:00, 18:00, 20:00), Yoga (wt/czw 9:00, 18:30), Spinning (pon/śr/pt 6:30, 17:00), Pilates, Zumba i TRX. Zajęcia wliczone w karnet 🏃' },
+      { keys: ['godzin','open','kiedy','zamknięt','otwarc','hours','weekend'],
+        ans: 'Siłownia czynna: pon–pt 6:00–23:00, sob–niedz 8:00–21:00 🕐' },
+      { keys: ['personal','trener','indywidualn','1na1','trening osobist'],
+        ans: 'Trenerzy personalni dostępni od 150 zł/h. Pakiet 10 treningów to 1300 zł (130 zł/h) 🏆' },
+      { keys: ['próbn','free','bezpłatn','pierwszy','trial','spróbow'],
+        ans: 'Tak! Pierwszy trening próbny jest całkowicie bezpłatny 🎉 Wpadnij w dowolnym czasie i powiedz że chcesz skorzystać z treningu próbnego.' },
+      { keys: ['sauna','prysznic','szatnia','parking','infrastruktura','locker','facilities'],
+        ans: 'W obiekcie znajdziesz: szatnie z prysznicami, saunę (wliczona w karnet), bezpłatny parking, koktajlbar i sklep z suplementami 🛁' },
+      { keys: ['suplementy','odżywki','białko','kreatyna','shop'],
+        ans: 'Mamy własny sklep z suplementami na terenie siłowni. Dostępne: białka, kreatyna, pre-workouty i inne 🥤' },
+    ]
+  };
 
-BUSINESS DOCUMENTS:
-${biz.docs}
+  const bizKB = KB[activeBiz] || KB[0];
+  let reply = null;
 
-RULES:
-- Answer ONLY questions related to this business
-- If asked something not in the documents, say you don't have that information and suggest contacting the business directly
-- Keep answers concise and friendly (2-4 sentences max)
-- Match the language of the customer (Polish if they write in Polish, English if English)
-- Use appropriate emojis occasionally to keep it warm
-- Never make up prices, hours, or services not in the documents
-- If asked to book/reserve, provide the contact method from the documents`,
-        messages
-      })
-    });
-
-    const data = await response.json();
-    const reply = data.content.map(b => b.text || '').join('');
-    chatHistory.push({ role: 'assistant', content: reply });
-
-    removeTyping();
-    appendMsg('bot', reply);
-
-  } catch (err) {
-    removeTyping();
-    appendMsg('bot', `Przepraszam, wystąpił błąd techniczny. Spróbuj ponownie lub skontaktuj się z nami bezpośrednio.`);
+  for (const entry of bizKB) {
+    if (entry.keys.some(k => q.includes(k))) {
+      reply = entry.ans;
+      break;
+    }
   }
+
+  // Fallback
+  if (!reply) {
+    const fallbacks = [
+      'Dziękuję za pytanie! Niestety nie mam tej informacji w bazie. Najlepiej skontaktuj się z nami bezpośrednio — chętnie pomożemy 😊',
+      'To pytanie wykracza poza moją bazę wiedzy. Napisz do nas bezpośrednio lub zadzwoń — odpowiemy szybko!',
+      'Hmm, nie mam tej informacji. Możesz skontaktować się z nami — najszybciej odpiszemy na maila lub przez formularz na stronie 📬',
+    ];
+    reply = fallbacks[Math.floor(Math.random() * fallbacks.length)];
+  }
+
+  chatHistory.push({ role: 'assistant', content: reply });
+  removeTyping();
+  appendMsg('bot', reply);
 
   isTyping = false;
   document.getElementById('demoSendBtn').disabled = false;
