@@ -43,6 +43,7 @@ Architektura to modularny monolit: jeden deploy, jedna baza, aplikacje Django z 
 Decyzje 0001–0017 są przyjęte. Nowej nie wpisuje się wstecz: kopiuje się [docs/adr/template.md](docs/adr/template.md).
 
 - Diagramy kontekstu, kontenerów i modułów: [docs/architecture.md](docs/architecture.md)
+- Segmenty, które da się wymienić bez edycji pozostałych: [docs/segmenty.md](docs/segmenty.md)
 - Stos, drzewo katalogów, ustawienia `dev` / `test` / `prod` / `demo`: [docs/przewodnik-techniczny.md](docs/przewodnik-techniczny.md)
 - Model danych i cykl życia ogłoszenia: [docs/domain-model.md](docs/domain-model.md)
 - Spis ADR: [docs/adr/README.md](docs/adr/README.md)

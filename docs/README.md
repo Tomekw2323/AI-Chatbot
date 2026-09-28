@@ -16,6 +16,7 @@ Czym jest BartoszUP, dla kogo, czym demo różni się od pełnego produktu.
 Stos, architektura, decyzje już podjęte.
 
 - [architecture.md](architecture.md) — kontekst, kontenery, granice modułów
+- [segmenty.md](segmenty.md) — segmenty monolitu i nazwy, które wolno wołać z innego segmentu
 - [przewodnik-techniczny.md](przewodnik-techniczny.md) — stos, drzewo katalogów, przepływ żądania
 - [domain-model.md](domain-model.md) — model danych, cykl życia, moderacja
 - [deployment.md](deployment.md) — Render, zmienne, notatki RODO przy wdrożeniu
