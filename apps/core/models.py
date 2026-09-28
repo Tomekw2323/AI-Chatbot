@@ -86,3 +86,25 @@ class TherapyApproach(ReferenceModel):
     class Meta(ReferenceModel.Meta):
         verbose_name = _("nurt terapeutyczny")
         verbose_name_plural = _("nurty terapeutyczne")
+
+
+class RateLimitCounter(models.Model):
+    """One fixed window of a rate limit (see ``core.ratelimit``)."""
+
+    key = models.CharField(max_length=200)
+    window_start = models.DateTimeField()
+    period_seconds = models.PositiveIntegerField()
+    count = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        verbose_name = _("licznik limitu zapytań")
+        verbose_name_plural = _("liczniki limitów zapytań")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("key", "window_start", "period_seconds"), name="uniq_rate_limit_window"
+            ),
+        ]
+        indexes = [models.Index(fields=("window_start",))]
+
+    def __str__(self) -> str:
+        return f"{self.key} @ {self.window_start:%Y-%m-%d %H:%M} = {self.count}"
