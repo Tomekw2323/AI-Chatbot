@@ -1,6 +1,6 @@
 # Jak działa BartoszUP
 
-Opis dla właściciela i partnera. Chodzi o to, co da się zrobić na stronie, stan kodu na gałęzi `main` (`71a09807`).
+Opis dla właściciela i partnera. Chodzi o to, co da się zrobić na stronie. Kod aplikacji na gałęzi `main` jest taki jak w `71a0980` (przewodniki doszły w `5d1d911`). Ten tekst dopowiada pytania, których pierwsza wersja nie zamykała.
 
 BartoszUP to polska strona dla branży zdrowia psychicznego. Są na niej ogłoszenia (praca, staż, wolontariat, „szukam pracy”, wynajem gabinetu) oraz wizytówki specjalistów i organizacji.
 
@@ -28,6 +28,69 @@ Na każdej stronie, od lewej:
 - Zalogowana osoba widzi **Mój panel**, **Dodaj ogłoszenie** i **Wyloguj**.
 
 Na dole: **Regulamin**, **Polityka prywatności**, a po zalogowaniu także **Moje dane**.
+
+Strona jest po polsku, adresy też. Osobnej aplikacji na telefon nie ma. To strona w przeglądarce: na wąskim ekranie kafelki schodzą jeden pod drugim.
+
+## Tematy z grupy na Facebooku
+
+Na zrzucie grupy, w „Informacje”, jest pięć tematów. Przycisk „Wyświetl mnie” na tym zrzucie rozwija opis na Facebooku. Na stronie takiego przycisku nie ma.
+
+Słowo „prywatne” na stronie znaczy co innego niż na grupie. Ogłoszenie prywatne to ogłoszenie bez organizacji, dodane w imieniu osoby. Po publikacji widzą je wszyscy. To nie jest wpis tylko dla znajomych.
+
+Pod ogłoszeniem nie ma wątku komentarzy ani reakcji. Zamiast dyskusji jest formularz wiadomości, a odpowiedź idzie mailem. Wpis na grupie wisi, dopóki ktoś go nie skasuje. Tutaj opublikowane ogłoszenie znika z listy po 60 dniach (da się je opublikować ponownie).
+
+### Oferty pracy, zlecenia i B2B
+
+To jest rodzaj **Oferta pracy** (kafelek na stronie głównej i adres `/ogloszenia/praca/`). Dodaje go osoba albo organizacja.
+
+B2B nie jest osobną tablicą. W formularzu, w polu „forma zatrudnienia”, są: umowa o pracę, B2B, umowa zlecenie / o dzieło, bezpłatne, inna. Filtr listy nie ma pozycji „tylko B2B”. Szukaj patrzy w tytuł i opis, nie w to pole. Napis „B2B” widać na stronie ogłoszenia, przy „Forma zatrudnienia”, a na liście tylko wtedy, gdy autor wpisze to słowo w tytule albo opisie.
+
+Osobnej tablicy „zlecenia” nie ma. Krótkie zlecenie to oferta pracy z formą B2B, „umowa zlecenie / o dzieło” albo „inna”. Że chodzi o jednorazowy projekt albo zastępstwo, pisze się w opisie. Nie ma pól „od dnia” i „do dnia” ani znacznika „zlecenie jednorazowe”.
+
+Próbki na demo są na umowę o pracę, nie na B2B. Żeby pokazać partnerowi B2B, zaloguj się jako Piotr (konto niżej) i dodaj takie ogłoszenie w trakcie rozmowy. Zostanie do uśpienia demo.
+
+### Staże, praktyki i wolontariaty
+
+W grupie to jeden temat. Na stronie to dwa rodzaje, dwa kafelki:
+
+- **Staż / praktyki** (`/ogloszenia/staze/`) — formularz jak przy pracy, łącznie z widełkami. Da się wybrać „bezpłatne”.
+- **Wolontariat** (`/ogloszenia/wolontariat/`) — zostaje tryb pracy: stacjonarnie, hybrydowo albo zdalnie. Widełki przy zapisie znikają.
+
+Oba dodaje osoba albo organizacja. To ogłoszenie od strony, która przyjmuje (poradnia szuka praktykanta). Osoba, która sama szuka stażu, używa „Szukam pracy / stażu”.
+
+### Podnajem gabinetów
+
+Rodzaj **Wynajem gabinetu**, w menu **Gabinety** (`/ogloszenia/gabinety/`). Dodaje go osoba (własne godziny, bez organizacji) albo organizacja. Rodzaj organizacji „wynajmujący gabinety” jest podpisem na stronie organizacji. Formularz ogłoszenia jest taki sam jak przy poradni.
+
+Jedno ogłoszenie ma jedną cenę i jedną jednostkę: za godzinę, za dzień albo za miesiąc. Cena jest obowiązkowa. Godzina i stały miesiąc naraz to dwa ogłoszenia. Jednostki „za blok” nie ma.
+
+„Bloki” to osobna rzecz: do 21 powtarzających się okien w tygodniu, dzień tygodnia plus od–do (na przykład wtorek 16:00–21:00). Konkretnej daty, na przykład 3 października, wpisać się nie da. Godzina końca musi być późniejsza niż początku. Dwa okna mogą na siebie nachodzić — strona tego nie sprawdza, bo nikt ich nie rezerwuje. Obok jest zwykły opis dostępności. To informacja dla czytelnika, nie kalendarz.
+
+Stałej wyłączności nie ma jako trybu. Najbliżej jest cena za miesiąc i zdanie w opisie („wyłączność na cały tydzień”). Nie ma znacznika „zajęte”, „na wyłączność” ani daty końca umowy.
+
+Jedno ogłoszenie to jeden gabinet: metraż, wyposażenie, adres albo dzielnica. Listy kilku sal w jednym ogłoszeniu nie ma. Zdjęć nie ma.
+
+Na demo jest jeden gabinet: 45 zł za godzinę, centrum Wrocławia, wtorki i czwartki 16:00–21:00, soboty 9:00–15:00. Ceny za dzień i za miesiąc w próbkach nie ma. Da się je dodać kontem Piotra, dopóki demo nie zaśnie.
+
+Pieniądze za wynajem ludzie ustalają poza stroną. Na stronie nikt nie płaci i nikt nie klika godziny, żeby ją zająć.
+
+### Szukam pracy i szukam gabinetu
+
+Rodzaj **Szukam pracy / stażu** (`/ogloszenia/szukam-pracy/`) dodaje się tylko jako osoba. Organizacji wybrać się nie da. W formularzu są forma zatrudnienia i tryb pracy. Widełek nie ma.
+
+Rodzaju „szukam gabinetu do wynajęcia” nie ma. **Gabinety** pokazują oferty wynajmujących, nie osoby szukające sali. Zdanie „szukam gabinetu” można wpisać w „o mnie” na wizytówce albo w opisie ogłoszenia „szukam pracy”. Fraza z tytułu albo opisu wpadnie w wyszukiwarkę. Nie powstanie z tego kategoria, filtr ani odznaka. Kratka na profilu nazywa się „szukam pracy / współpracy”.
+
+Pliku CV nie ma gdzie wgrać. Żaden formularz nie przyjmuje plików. Zamiast CV jest wizytówka: nagłówek, „o mnie”, zawód, miasto, specjalizacje, języki i numer uprawnień albo certyfikatu. Numer to zwykły tekst. Nikt nie sprawdza go w rejestrze.
+
+### Wizytówki i oferty dla pacjentów
+
+Wizytówki są, w menu **Specjaliści**. Służą branży: poradnia może znaleźć osobę z odznaką „Szuka pracy / współpracy” i zobaczyć jej ogłoszenia dodane prywatnie.
+
+Katalogu „Znajdź psychologa” nie ma. Nie ma cennika sesji, napisu „przyjmuję pacjentów”, umawiania wizyty ani osobnego konta pacjenta. Pole „widoczny dla pacjentów” jest w bazie, domyślnie wyłączone, żaden formularz go nie pokazuje i żadna strona go nie używa.
+
+Lista specjalistów jest w internecie publiczna. Pacjent może ją otworzyć i przeczytać to, co specjalista sam wpisał. To nadal wizytówka branżowa, nie oferta dla pacjentów. Kontakt na wizytówce to mailto, telefon i strona www, jeśli te pola są wypełnione. Formularza wiadomości na wizytówce nie ma — jest tylko przy ogłoszeniu.
+
+Polityka prywatności mówi wprost, że serwis nie przetwarza danych o zdrowiu pacjentów. Wiadomość „chcę wizytę” wpisana w ogłoszenie o pracę nie jest funkcją serwisu.
 
 Wylogowanie działa przyciskiem (to wysłanie formularza). Samo wejście w adres wylogowania nic nie robi.
 
@@ -127,6 +190,16 @@ W formularzu:
 
 Publiczna wizytówka (`/specjalisci/…`) pokazuje te dane, odznakę „Szuka pracy / współpracy”, jeśli jest zaznaczona, oraz ogłoszenia tej osoby dodane prywatnie (bez organizacji). Kontakt to mailto, telefon i link — osobnego formularza na wizytówce nie ma. Właściciel widzi **Edytuj profil**.
 
+### Student i CV
+
+Ścieżka studenta, który na grupie wrzucałby CV:
+
+1. Konto z potwierdzonym e-mailem.
+2. Profil. W zawodzie jest „student(ka) psychologii”. Nagłówek i „o mnie” zastępują CV. Kratka „szukam pracy / współpracy” wyróżnia profil na liście specjalistów (filtr „szuka pracy”).
+3. Ogłoszenie rodzaju **Szukam pracy / stażu**, bez organizacji. W opisie: rok studiów, od kiedy, jakie praktyki.
+
+Nie ma przycisku „aplikuj jednym kliknięciem” ani załącznika. Poradnia pisze przez formularz na ogłoszeniu studenta albo student pisze na ogłoszeniu poradni. Na demo ta osoba jest gotowa: `ola@example.com` (niżej). Piotr, właściciel poradni, profilu specjalisty nie ma — konto może mieć profil i organizację naraz, ale w próbkach Piotr ma tylko organizacje.
+
 Odznaczenie „profil widoczny publicznie” chowa wizytówkę przed innymi (wejście w adres daje „nie znaleziono”). W panelu profil zostaje i da się go z powrotem włączyć.
 
 Pole „widoczny dla pacjentów” jest w bazie i domyślnie wyłączone. Żaden formularz go nie pokazuje i żadna strona dla pacjentów go nie używa.
@@ -148,7 +221,19 @@ Organizacji nie ma na osobnej liście w menu. Stronę organizacji otwierasz z og
 - strona, e-mail, telefon, NIP,
 - „widoczna publicznie”.
 
-Po zapisie jesteś **właścicielem**. Strona organizacji pokazuje opis, odznakę **Zweryfikowana** tylko gdy moderator ją nada, aktualne ogłoszenia tej organizacji oraz kontakt (adres, mailto, telefon, www). Właściciel i administrator widzą **Edytuj organizację** i **Dodaj ogłoszenie**.
+Po zapisie jesteś **właścicielem**. Strona organizacji pokazuje opis, odznakę **Zweryfikowana** tylko gdy moderator ją nada, aktualne ogłoszenia tej organizacji oraz kontakt (adres, mailto, telefon, www). Listy zespołu na tej stronie nie ma. Właściciel i administrator widzą **Edytuj organizację** i **Dodaj ogłoszenie**.
+
+### Co klika poradnia
+
+Rodzaj „poradnia / klinika” jest podpisem. To samo potrafi gabinet prywatny, fundacja, OPS i „wynajmujący gabinety”: jedna strona, te same ogłoszenia. NIP jest zwykłym polem. Samo wpisanie NIP nie daje odznaki **Zweryfikowana** i nie sprawdza firmy w żadnym rejestrze.
+
+Poradnia, która chce zastąpić post na grupie:
+
+1. Konto z potwierdzonym e-mailem, **Dodaj organizację**, rodzaj poradnia / klinika, miasto ze słownika.
+2. **Dodaj ogłoszenie** i w liście „w imieniu organizacji” wybrać tę poradnię. Puste pole to ogłoszenie osoby, nie poradni.
+3. Oferta pracy (w tym B2B albo umowa zlecenie), osobno staż, osobno wolontariat, osobno wynajem gabinetu. Jedna osoba może mieć przy tym własny profil specjalisty.
+
+Wiadomości z ogłoszenia poradni idą na e-mail wpisany w tym ogłoszeniu. Puste pole oznacza e-mail autora ogłoszenia (osoby zalogowanej), nie e-mail kontaktowy organizacji ze strony poradni. W panelu nie ma wspólnej skrzynki dla zespołu.
 
 ### Role
 
@@ -158,7 +243,7 @@ Po zapisie jesteś **właścicielem**. Strona organizacji pokazuje opis, odznak�
 | Administrator | To samo. |
 | Członek zespołu | Nic z tego na stronie. Nie widzi organizacji w panelu i nie może publikować w jej imieniu. |
 
-Na stronie nie ma zaproszeń ani zmiany ról. Dopisanie drugiej osoby robi moderator w ukrytym panelu administracyjnym. W demo gotowe role są tylko w przykładowych danych.
+Na stronie nie ma zaproszeń ani zmiany ról. Recepcji ani drugiego psychologa nie dopiszesz z panelu. Dopisanie drugiej osoby robi moderator w ukrytym panelu administracyjnym. W demo gotowe role są tylko w przykładowych danych. Pole „stanowisko” przy członkostwie jest w bazie; formularz na stronie go nie pokazuje.
 
 Odznaczenie „widoczna publicznie” chowa stronę organizacji. Sam znacznik „zweryfikowana” i „zablokowana” ustawia tylko moderator — w formularzu ich nie ma.
 
@@ -197,7 +282,7 @@ Karta: rodzaj, miasto, „Zdalnie” gdy tak ustawiono, tytuł, nazwa organizacj
 
 Strona ogłoszenia: rodzaj, miasto i województwo, tytuł, link do organizacji albo do wizytówki autora (gdy ogłoszenie jest prywatne i autor ma publiczny profil), dane zależne od rodzaju, opis, kategorie, „ważne do”.
 
-Przy gabinecie: cena, metraż, adres, wyposażenie, lista bloków (na przykład „Wtorek 16:00–21:00”) i opis dostępności. To jest informacja, nie rezerwacja. Nikt nie klika godziny i nie płaci.
+Przy gabinecie: cena, metraż, adres, wyposażenie, lista bloków (na przykład „Wtorek 16:00–21:00”) i opis dostępności. To jest informacja, nie rezerwacja. Nikt nie klika godziny i nie płaci. Szczegóły godzin, dni, miesiąca i wyłączności są w sekcji „Podnajem gabinetów” wyżej.
 
 ### Statusy
 
@@ -222,7 +307,13 @@ Na `/ogloszenia/` po lewej:
 - Województwo (16 województw, 54 miasta w słowniku),
 - Kategoria,
 - Tryb pracy,
-- Sortowanie: najnowsze, cena rosnąco, cena malejąco.
+- Sortowanie: najnowsze, cena rosnąco, cena malejąco. Cena w tym sortowaniu to cena gabinetu. Widełki pensji nie układają listy.
+
+Miasto przy dodawaniu ogłoszenia, profilu i organizacji wybiera się ze słownika: 16 województw, 54 miasta. Własnej miejscowości wpisać się nie da. Dzielnicę albo adres dopisuje się obok, zwykłym tekstem. Miasta spoza listy dodaje moderator w panelu administracyjnym. Nowe wgranie słownika z pliku nadpisuje takie poprawki.
+
+„Cała Polska” w filtrze znaczy: nie zawężaj do miasta. Przy dodawaniu ogłoszenia takiego miasta nie ma. Trzeba wybrać jedno miasto, także przy pracy zdalnej (tryb „zdalnie” jest osobnym polem). Na profilu „pracuję online” też nie zastępuje miasta.
+
+Na stronie głównej wyróżnione są: Wrocław, Bydgoszcz, Toruń, Lublin, Łódź, Kraków, Warszawa, Rzeszów, Białystok, Gdańsk, Gdynia, Katowice, Poznań, Szczecin.
 
 **Filtruj** działa też bez JavaScriptu. Z JavaScriptem lista podmienia się przy zmianie pola. Strona mieści 20 ogłoszeń, na dole jest paginacja.
 
@@ -237,6 +328,8 @@ Ramka **Kontakt**:
 - Gość — tylko gdy włączony jest Turnstile (patrz wyżej). Limit gościa: 3 na godzinę i 10 na dobę z jednego adresu.
 
 Po wysłaniu: „Wiadomość została wysłana do autora ogłoszenia.” Autor dostaje maila z imieniem, adresem i treścią. Odpowiedź to zwykła odpowiedź na tego maila. Gdy wysyłka maila się nie uda, wiadomość i tak zostaje zapisana u nas.
+
+Skrzynki w **Moim panelu** nie ma. Historii korespondencji na stronie nie poczytasz. Treść jest w mailu, w bazie oraz w pliku **Pobierz dane** (wysłane oraz odebrane przy ogłoszeniach, których jesteś autorem). Ogłoszenia organizacji, których nie jesteś autorem, do tego pliku nie wchodzą, nawet gdy jesteś właścicielem poradni. Na demo mail do skrzynki nie dochodzi. Żeby w trakcie rozmowy z partnerem zobaczyć treść, autor klika **Pobierz dane** i podaje hasło jeszcze raz. Po uśpieniu demo ten plik i tak powstaje od nowa, bez tamtej wiadomości.
 
 Na pełnej wersji stare wiadomości są kasowane po 365 dniach (codzienne zadanie). Na demo tego zadania nie ma.
 
@@ -267,7 +360,13 @@ Moderator może:
 - dopisać członkostwo i rolę,
 - poprawiać słownik miast, specjalizacji i nurtów.
 
-Ogłoszenie idzie na stronę od razu po publikacji. Nikt go nie zatwierdza z góry.
+Ogłoszenie idzie na stronę od razu po publikacji. Nikt go nie zatwierdza z góry. Potwierdzony e-mail znaczy, że ktoś kliknął link w mailu. Nie znaczy, że to psycholog. Numer uprawnień na profilu nikt nie porównuje z rejestrem. Odznaka **Zweryfikowana** przy organizacji to ręczna decyzja moderatora, bez wgrywania dokumentów.
+
+Zablokowanie profilu chowa wizytówkę. Nie chowa automatycznie prywatnych ogłoszeń tej osoby. Żeby zniknęły, moderator ukrywa każde ogłoszenie albo osoba je archiwizuje. Zablokowanie organizacji chowa ją i jej ogłoszenia.
+
+Trzy zgłoszenia od trzech kont ukrywają ogłoszenie, zanim ktokolwiek je przeczyta. Rozpatrzenie zgłoszenia samo go nie przywraca.
+
+Na stronie nie ma przycisku „zostań moderatorem”. Na publicznym demo nie ma konta moderatora, więc partnerowi nie pokażesz ukrywania ogłoszeń ani nadawania odznaki.
 
 ## Moje dane
 
@@ -278,6 +377,12 @@ Ogłoszenie idzie na stronę od razu po publikacji. Nikt go nie zatwierdza z gó
 **Usuń konto na zawsze** — wpisujesz swój e-mail (musi się zgadzać) i też musisz świeżo potwierdzić hasło. Kasowane są konto, profil, prywatne ogłoszenia i wysłane wiadomości. Ogłoszenia organizacji zostają przy organizacji.
 
 Gdy jesteś jedynym właścicielem, a w organizacji są inni ludzie i nie ma administratora, usunięcie się zatrzyma i poprosi, żeby najpierw nadać komuś rolę administratora (to robi moderator w panelu). Gdy administrator jest, zostaje właścicielem. Gdy jesteś sam w organizacji, organizacja znika razem z jej ogłoszeniami.
+
+## Pieniądze
+
+Dodanie ogłoszenia, profilu i organizacji nic w tym kodzie nie kosztuje. Nie ma cennika serwisu, prowizji, koszyka, BLIK-a ani faktury. Ogłoszenia promowanego nie ma.
+
+Kwota na ofercie pracy to widełki do przeczytania. Kwota przy gabinecie to cena do przeczytania. Zapłata za etat, zlecenie albo wynajem dzieje się poza stroną, między ludźmi.
 
 ## Regulamin i polityka
 
@@ -309,8 +414,48 @@ Darmowa usługa Render zasypia, gdy nikt jej nie otwiera (na planie Free typowo 
 
 Na demo nie ma prawdziwej poczty, crona (codzienne wygaszanie i kasowanie starych wiadomości), bazy PostgreSQL, kluczy Turnstile ani konta moderatora.
 
+### Co da się pokazać partnerowi
+
+Otwórz https://bartoszup-demo.onrender.com. Żółty pasek ma być widoczny. Nie wpisuj prawdziwych nazwisk ani telefonów.
+
+Da się pokazać:
+
+- stronę główną, pięć kafelków, filtry, miasto, jedno ogłoszenie i wizytówkę bez logowania;
+- `anna@example.com` — profil psychoterapeutki i to, że członkini poradni nie edytuje poradni ani nie dodaje ogłoszeń w jej imieniu;
+- `piotr@example.com` — poradnię z odznaką **Zweryfikowana**, drugą organizację (OPS), ofertę pracy, staż, wolontariat i gabinet na godziny; tym kontem da się w trakcie rozmowy dodać B2B albo cenę za miesiąc;
+- `ola@example.com` — studentkę z kratką „szukam pracy” i ogłoszenie „szukam praktyk”;
+- formularz wiadomości między tymi kontami oraz treść w **Pobierz dane** (mail do skrzynki nie przyjdzie);
+- że świeża rejestracja zatrzymuje się na prośbie o potwierdzenie e-maila.
+
+Nie da się pokazać, bo tego nie ma albo demo tego nie unosi:
+
+- płatności, faktury, rezerwacji godziny, kalendarza zajęć, zdjęć, pliku CV, zaproszenia do zespołu;
+- rodzaju „szukam gabinetu” i katalogu dla pacjentów;
+- gościa piszącego bez konta (nie ma Turnstile);
+- logowania Google;
+- panelu moderatora i odznaki nadanej „na żywo”;
+- maila w prawdziwej skrzynce i tego, że dane zostaną po zamknięciu karty.
+
+Próbki nie zawierają oferty B2B ani gabinetu za dzień lub za miesiąc. Jest umowa o pracę i 45 zł za godzinę.
+
 ## Pełna wersja, która nie jest wdrożona
 
 Plik `render.yaml` opisuje późniejszy start we Frankfurcie: serwis strony, baza PostgreSQL i codzienne zadanie o 3:15 UTC (wygaszenie ogłoszeń po terminie, skasowanie wiadomości starszych niż rok, sprzątnięcie liczników limitów). Żeby to wstało, trzeba jeszcze podać pocztę, tajny adres panelu moderatora, klucze Turnstile (inaczej gość nie napisze do autora) i ewentualnie Google. Tego wdrożenia nie ma.
 
 Płatności (promowane ogłoszenia, wynajem z opłatą) i rezerwacja wizyt pacjentów są w planie na później. W tym kodzie ich nie ma — ani na demo, ani w pełnej wersji.
+
+## Czego z grupy jeszcze nie ma
+
+Jest tablica z pięcioma rodzajami, wizytówki, organizacje, filtry miast, kontakt mailem, zgłoszenia i konto z potwierdzeniem e-maila.
+
+Nie ma, i w tym kodzie nie ma czym tego zastąpić poza zwykłym opisem:
+
+- osobnej tablicy zleceń i filtra „tylko B2B”;
+- rodzaju „szukam gabinetu”;
+- stałej wyłączności, rezerwacji godzin i płatności za gabinet;
+- pliku CV, zdjęć i wątku komentarzy pod ogłoszeniem;
+- katalogu „Znajdź psychologa”, cennika sesji i umawiania pacjentów;
+- zaproszeń do zespołu poradni i skrzynki wiadomości w panelu;
+- sprawdzenia dyplomu albo NIP.
+
+Ogłoszenie na grupie nie wygasa samo. Tutaj po 60 dniach znika z listy, dopóki autor nie opublikuje go ponownie.

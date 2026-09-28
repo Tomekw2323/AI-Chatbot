@@ -1,6 +1,6 @@
 # Przewodnik techniczny BartoszUP
 
-Dla osoby, która nadzoruje zmiany i nie pisała tego kodu. Stan gałęzi `main`: `71a09807` (2026-09-28). Opisuje to, co jest w repozytorium. Rezerwacji wizyt i płatności w kodzie nie ma.
+Dla osoby, która nadzoruje zmiany i nie pisała tego kodu. Kod aplikacji na `main` jest taki jak w `71a0980` (przewodniki doszły w `5d1d911`, 2026-09-28). Opisuje to, co jest w repozytorium, i pytania przy przejęciu, których pierwsza wersja nie zamykała. Rezerwacji wizyt i płatności w kodzie nie ma.
 
 Krótszy opis dla właściciela: [jak-dziala.md](jak-dziala.md).
 
@@ -91,7 +91,35 @@ Wspólne `created_at` / `updated_at`: `TimeStampedModel`. Slugi: `apps.core.text
 
 `Listing.clean`: „szukam pracy” nie może mieć organizacji; gabinet wymaga `price_amount` i `price_unit`; `salary_min` ≤ `salary_max` (to samo trzyma `CheckConstraint` `listing_salary_range_valid`).
 
-Widoczność publiczna ogłoszenia (`is_publicly_visible` i `public()`): `status=published`, `expires_at` puste albo w przyszłości, `is_flagged=False`, organizacja nie jest `is_blocked`. Cron tylko porządkuje status. Po terminie ogłoszenie znika z list zanim status zdąży zmienić się na `expired`.
+### Pięć rodzajów, jedna tabela, zero szóstego
+
+ADR 0006. Nie ma osobnych tabel na pracę, staż, wolontariat, „szukam pracy” i gabinet. Nie ma też rodzaju na „zlecenie”, „szukam gabinetu” ani ofertę dla pacjenta. Zlecenie z grupy na Facebooku to `kind=job` plus `employment_type` (`b2b` albo `civil_contract`). „Szukam gabinetu” nie ma kolumny. `open_to_work` na `SpecialistProfile` to „szukam pracy / współpracy”, nie szukanie sali.
+
+Które kolumny formularz zostawia (`ListingForm.clean`, `FIELDS_BY_KIND` w `apps/listings/forms.py`; reszta idzie na `None` albo `""`):
+
+| `kind` | Zostaje | Czyszczone |
+| --- | --- | --- |
+| `job` | `employment_type`, `work_mode`, `salary_min`, `salary_max`, `salary_period` | pola gabinetu |
+| `internship` | to samo co `job` | pola gabinetu |
+| `volunteering` | `work_mode` | pensja i pola gabinetu |
+| `job_seeking` | `employment_type`, `work_mode`; `organization` wymuszone na `None` | pensja i pola gabinetu |
+| `room_rental` | `price_amount`, `price_unit`, `room_area_m2`, `amenities`, `availability_description` plus do 21 wierszy `RoomAvailabilityBlock` | pensja i tryb pracy |
+
+Jedna cena na wiersz. Godzina i miesiąc naraz to dwa `Listing`, nie dwa `price_unit`. Filtr `ListingFilter` nie ma `employment_type`. `ordering` sortuje `published_at` albo `price_amount` (parametr `price`). Widełki `salary_*` nie biorą udziału w sortowaniu. Szukaj (`filter_q`) obejmuje `title` i `description`, nie `employment_type`.
+
+`Organization.kind` (`clinic`, `private_practice`, `ngo`, `public_institution`, `room_provider`, `other`) nie zmienia dozwolonych ogłoszeń. To etykieta. `tax_id` (NIP) nie ma walidatora rejestru. `Membership.job_title` jest w modelu i w eksporcie RODO; `OrganizationForm` go nie ma, strona organizacji (`templates/organizations/organization_detail.html`) nie renderuje członków.
+
+`recipient_email_for` (`apps/listings/services.py`) zwraca `listing.contact_email` albo `listing.author.email`. E-mail organizacji sam się tam nie podstawia.
+
+Widoczność publiczna ogłoszenia (`is_publicly_visible` i `public()`): `status=published`, `expires_at` puste albo w przyszłości, `is_flagged=False`, organizacja nie jest `is_blocked`. `public()` nie patrzy na `SpecialistProfile.is_blocked` ani na `author.is_active`. Zablokowanie wizytówki nie zdejmuje prywatnych ogłoszeń. Cron tylko porządkuje status. Po terminie ogłoszenie znika z list zanim status zdąży zmienić się na `expired`.
+
+### Bloki gabinetu to nie kalendarz
+
+`RoomAvailabilityBlock`: `weekday` 0–6 (poniedziałek = 0), `start_time`, `end_time`. Check w bazie: `end_time > start_time` (`availability_block_end_after_start`). Nie ma daty, strefy na samym polu `TimeField`, zakazu nakładania okien ani unikalności `(listing, weekday)`. Formset: `extra=2`, `max_num=21` (`AvailabilityFormSet`).
+
+Zapis w `apps/listings/views.py`, `_save_listing_form`: formset jest walidowany i zapisywany tylko gdy `kind == room_rental`. Przy innym rodzaju `availability_blocks` są kasowane. Szablon pokazuje bloki tylko przy `listing.is_room_rental`.
+
+Nie ma tabeli rezerwacji, holda, płatności ani „wyłączności”. Cena za miesiąc plus `availability_description` to jedyny sposób zapisać stały najem, i jest to tekst. ADR 0006: kalendarz fazy 2 ma być osobnym modułem (`rooms` / bookable slots), a nie dorabianiem kolumn do `RoomAvailabilityBlock`. `docs/domain-model.md` mówi to samo: konkretne sloty to osobna tabela wskazująca na blok, jeszcze nieistniejąca.
 
 Profil publiczny: `is_public`, nie `is_blocked`, `user.is_active`. Organizacja publiczna: `is_public` i nie `is_blocked`.
 
@@ -139,6 +167,10 @@ Kod: `apps/listings/permissions.py`, `apps/organizations/services.py`. Testy: `a
 
 `member` nie zarządza organizacją ani jej ogłoszeniami. Na stronie nie ma zaproszeń — `Membership` dodaje się w adminie (`MembershipInline`). Roadmap wymienia zaproszenia jako rzecz przed startem, nie jako funkcję.
 
+Ról produktowych na `User` nie ma (ADR 0007). Specjalista to obecność `SpecialistProfile` (jeden, `OneToOne`). Poradnia to `Membership`. `is_staff` / `is_superuser` to moderator w Django admin, nie rola na stronie. Pacjent nie jest osobnym modelem ani grupą Django. Faza 3, jeśli powstanie, ma użyć tego samego `User` (ADR 0007 i 0009), a dane wizyty trzymać w nowym module, nie w polu na użytkowniku.
+
+Google: provider jest w `INSTALLED_APPS`, przycisk pojawia się dopiero gdy oba `GOOGLE_CLIENT_ID` i `GOOGLE_CLIENT_SECRET` są niepuste (`config/settings/base.py`, `SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT`). `ACCOUNT_LOGOUT_ON_GET = False`. `SESSION_COOKIE_AGE` nie jest nadpisane (zostaje domyślne dwa tygodnie Django).
+
 Kasowanie konta (`privacy.services.delete_account`):
 
 - jedyny członek → organizacja jest kasowana (ogłoszenia kaskadą);
@@ -148,7 +180,9 @@ Kasowanie konta (`privacy.services.delete_account`):
 - ogłoszenia organizacji autora przechodzą na owner/admin (kolejność `-role`, `created_at`); prywatne ogłoszenia znikają z userem (`CASCADE`);
 - `Inquiry` nadawcy i wiersze z tym samym `sender_email` są kasowane przed `user.delete()`.
 
-Eksport: `privacy.services.export_user_data` — JSON, `Content-Disposition`, `Cache-Control: no-store`.
+Eksport: `privacy.services.export_user_data` — JSON, `Content-Disposition`, `Cache-Control: no-store`. Są: konto, `EmailAddress`, `SocialAccount` (provider, bez tokenów w tym słowniku), profil (bez `is_blocked` i bez `visible_to_patients`), członkostwa z `job_title`, ogłoszenia autora, `inquiries_sent`, `inquiries_received`, zgłoszenia złożone przez użytkownika.
+
+`inquiries_received` to `Inquiry` przy `listing__author=user`, nie przy organizacjach, którymi user zarządza. Właściciel poradni nie zobaczy w eksporcie wiadomości do ogłoszenia, którego autorem jest ktoś inny. Widoku skrzynki nie ma: `InquiryAdmin` w `apps/listings/admin.py` jest dla `is_staff`, a panel (`templates/listings/dashboard.html`) zapytań nie listuje.
 
 ## Kontrola bezpieczeństwa
 
@@ -236,7 +270,13 @@ uv run python manage.py makemigrations --check --dry-run
 uv run pytest --cov
 ```
 
-Testy tylko na PostgreSQL (`config/settings/test.py`, `DATABASE_URL`). Próg pokrycia: 97% (`[tool.coverage.report] fail_under` w `pyproject.toml`), gałęzie włączone, migracje i testy pominięte w pomiarze. Nowy warunek uprawnień: test dozwolony i odmowa. Nowy filtr: test, że zawęża. CI (`.github/workflows/ci.yml`): ruff, mypy, import-linter, `makemigrations --check`, `check --deploy` na `prod`, pytest z Postgres 17, `pip-audit --strict`, budowa celu Docker `prod`.
+Testy tylko na PostgreSQL (`config/settings/test.py` czyta `DATABASE_URL`; lokalnie ten sam URL co w `.env.example`: `postgres://bartoszup:bartoszup@localhost:5432/bartoszup`). Pytest nie ma `conftest.py`. Jeden plik: `uv run pytest apps/listings/tests/test_permissions.py`. CI woła `uv run pytest --create-db --cov`. Lokalnie `addopts` ma `--reuse-db` (`pyproject.toml`).
+
+Job linta w `.github/workflows/ci.yml` ustawia `DATABASE_URL=sqlite:///ci.db` tylko po to, żeby przeszły `makemigrations --check` i mypy. Same testy idą osobnym jobem na Postgres 17. Testów nie przerzuca się na SQLite: kontrakt repozytorium to PostgreSQL (`AGENTS.md`), a limiter i tak jest opisany pod Postgres (ADR 0014), nawet jeśli demo wykonuje ten sam `INSERT … ON CONFLICT` na SQLite.
+
+Próg pokrycia: 97% (`[tool.coverage.report] fail_under` w `pyproject.toml`), gałęzie włączone. Pomiar omija `*/migrations/*` i `*/tests/*`. Nowy warunek uprawnień: test dozwolony i odmowa. Nowy filtr: test, że zawęża. CI: ruff (z bandit `S`), mypy, import-linter, `makemigrations --check`, `check --deploy` na `prod`, pytest z Postgres 17, `pip-audit --strict`, budowa celu Docker `prod`.
+
+Mail lokalnie: compose stawia Mailpit, `EMAIL_URL=smtp://mailpit:1025`, skrzynka http://localhost:8025. Bez compose `base.py` bierze `EMAIL_URL` z domyślnym `consolemail://` — listy widać w terminalu procesu.
 
 Obraz produkcyjny lokalnie: sekcja na końcu [deployment.md](deployment.md). `Dockerfile` ma cele `base`, `dev`, `build` (tailwind + `collectstatic` przy atrapie ustawień prod), `prod` (użytkownik `app`, gunicorn, `WEB_CONCURRENCY` domyślnie 3).
 
@@ -305,3 +345,61 @@ Faza 2 (kalendarz godzin, płatności, promowane ogłoszenia) i faza 3 (wizyty p
 4. Demo nie uruchamia `daily_maintenance`. Lista i tak chowa ogłoszenie po `expires_at`. Status w bazie zostaje `published`, dopóki cron nie zrobi `expire()`. Na demo baza i tak powstaje od nowa przy każdym starcie.
 5. Demo nie seeduje superusera. `/admin/` na demo odpowiada, konta moderatora nie ma. Produkcja w ogóle nie wstanie z adresem `admin/`.
 6. Płatności i rezerwacja wizyt nie istnieją w żadnej z tych konfiguracji. `visible_to_patients` i `RoomAvailabilityBlock` są przygotowaniem pod później, bez widoków rezerwacji.
+7. `config/settings/base.py` czyta `EMAIL_URL` z domyślnym `consolemail://`. `prod.py` tego nie zaostrza. Brak sekretu na Renderze nie wywala startu: weryfikacja zostaje `mandatory`, a listy idą w konsolę procesu. `render.yaml` oznacza `EMAIL_URL` jako `sync: false` — trzeba go wpisać ręcznie.
+8. Cron w `render.yaml` ma własny `DJANGO_SECRET_KEY` (`generateValue: true`), inny niż web. `daily_maintenance` nie podpisuje ciasteczek, więc do wygaszania to wystarcza. Nie wołaj z crona niczego, co sprawdza podpis sesji, licząc na wspólny sekret.
+9. `STORAGES["default"]` w prod i demo to `FileSystemStorage`, ale żaden widok nie przyjmuje pliku. `MEDIA_ROOT` / `MEDIA_URL` nie są ustawione. `DATA_UPLOAD_MAX_MEMORY_SIZE` to 1 MB. Plan zdjęć (UE, Pillow, EXIF, signed URL) jest w `docs/security.md` i nie jest zaimplementowany.
+
+## Luki operacyjne
+
+### Poczta
+
+Wysyłka zapytania jest synchroniczna w żądaniu HTTP: `EmailMessage.send()` w `send_inquiry`. Wyjątek jest łapany, log idzie z samym `inquiry_id`, wiersz zostaje z `email_sent=False`. Nie ma ponowienia, kolejki, Celery ani workera. Mail weryfikacyjny allauth idzie tym samym backendem, też bez kolejki.
+
+Na demo `config/settings/demo.py` wymusza `console.EmailBackend`. Na dev z compose listy łapie Mailpit. Prod bez `EMAIL_URL` też ląduje w konsoli procesu (punkt 7 wyżej). SPF/DKIM/DMARC nie są w repozytorium — `docs/security.md` wymienia je jako brak. `DEFAULT_FROM_EMAIL` jest sekretem `sync: false` w `render.yaml`.
+
+Skrzynki użytkownika nie ma. Autor pełnej wersji czyta maila u siebie. Na demo treść da się zobaczyć tylko w bazie: eksport JSON albo (lokalnie, przy `DEBUG`) konto `admin@example.com` z `seed_demo`. Publiczne demo superusera nie seeduje.
+
+### Turnstile
+
+`apps/core/captcha.py`: `is_enabled()` wymaga obu kluczy. `verify()` POST na stały `https://challenges.cloudflare.com/turnstile/v0/siteverify`, timeout 5 s. Pusty token, brak kluczy albo błąd sieci zwracają `False` (zamknięte, ADR 0013). Widok gościa przy wyłączonym captcha nie renderuje formularza i POST kieruje na login. CSP puszcza skrypt i ramkę tylko z `challenges.cloudflare.com` (`base.py`). `render.demo.yaml` kluczy nie deklaruje. Klucze testowe Cloudflare, które zawsze przechodzą, są opisane w `.env.example` i nie są wpisane w demo.
+
+### Pliki
+
+Nie ma `FileField` ani `ImageField` w modelach aplikacji. CV, logo, zdjęcie profilu i zdjęcie gabinetu nie mają gdzie wylądować. WhiteNoise serwuje pliki statyczne z obrazu, nie uploady. Dopóki nie ma magazynu w UE opisanego w `docs/security.md`, nie dodawaj pola pliku „na razie na dysk kontenera” — dysk demo i tak znika, a prod nie ma tej ścieżki w `render.yaml`.
+
+### Cron
+
+Jedno polecenie: `python manage.py daily_maintenance` (`apps/listings/management/commands/daily_maintenance.py`) woła `expire_due_listings`, `purge_old_inquiries` (`INQUIRY_RETENTION_DAYS`, domyślnie 365) i `purge_old_windows`. Starsze `expire_listings` robi tylko pierwsze. Harmonogram płatnego blueprintu: `15 3 * * *` w `render.yaml`, osobna usługa, region Frankfurt. Demo (`render.demo.yaml`, `scripts/run_demo.sh`) crona nie startuje.
+
+Lista i tak chowa wiersz po `expires_at`, bo `public()` porównuje datę w żądaniu. Bez crona status w bazie zostaje `published`. Na demo i tak każda pobudka buduje SQLite od zera (`prepare_demo`).
+
+Cache limitów allauth to tabela `django_cache` (`DatabaseCache`). Web tworzy ją w `preDeployCommand` (`render.yaml`) albo w `prepare_demo`. Bez tabeli limity allauth nie mają gdzie zapisać okna.
+
+## Czego nie scalać
+
+To nie jest gust. To rzeczy, które ten repozytorium już odrzuca albo które ADR każe odłożyć:
+
+- Kierunek importów pod prąd albo zapytanie `Membership` z `listings` z pominięciem `organizations.services`. `uv run lint-imports` ma kontrakt warstw w `pyproject.toml`. Niższy moduł pokazuje ogłoszenia tagiem `organization_listings` / `personal_listings` (`apps/listings/templatetags/listing_tags.py`).
+- Ręczne `listing.status = ...` w widoku. Przejścia idą przez `publish()` / `archive()` / `expire()`. Wyjątek już jest w `expire_due_listings` (`QuerySet.update` na `due_to_expire()`).
+- Nowe dane osobowe bez wpisu w `privacy.services.export_user_data` i `delete_account` oraz bez testu w `apps/privacy/tests/test_privacy.py`.
+- Pole moderacji albo właściciela na formularzu (`is_flagged`, `status`, `author`, `is_verified`, `is_blocked`, `visible_to_patients`).
+- `|safe`, `mark_safe`, `{% autoescape off %}` w szablonie HTML, inline `<script>` albo `on*=`. Test szablonów to wyłapuje. Wyjątek świadomy: `templates/listings/email/inquiry.txt`.
+- Widok zmieniający stan bez `require_POST`, bez 403/404 i bez pary testów dozwolone/odmowa. POST podatny na nadużycie bez `@ratelimit` i wpisu w `RATE_LIMITS` plus testu 429.
+- Obniżenie `fail_under` poniżej 97 albo testy na SQLite.
+- Sekret w kodzie. `prod.py` nie wstanie przy `DJANGO_SECRET_KEY` krótszym niż 50 znaków albo zaczynającym się od `change-me`, ani przy `DJANGO_ADMIN_URL` równym `admin/` lub bez końcowego `/`.
+- Dane o zdrowiu, powód wizyty, konto pacjenta albo podpięcie `visible_to_patients` do publicznej listy bez osobnego zadania i ADR (ADR 0009). Samo pole w schemacie nie jest zgodą na fazę 3.
+- Traktowanie `RoomAvailabilityBlock` jako terminarza rezerwacji (nakładanie, płatność, „zajęte”). ADR 0006 trzyma kalendarz w przyszłym module.
+- `FileField` zanim powstanie magazyn z sekcji „File uploads” w `docs/security.md`.
+
+## Katalog pacjentów, gdy przyjdzie na to zadanie
+
+Dziś go nie ma. `SpecialistProfile.objects.public()` filtruje `is_public`, `is_blocked` i `user.is_active`. Nie filtruje `visible_to_patients`. Podpięcie tej flagi do istniejącej listy `/specjalisci/` schowałoby wizytówki branżowe (domyślnie `False`) i nadal nie dałoby cennika sesji ani rezerwacji. `open_to_work` to sygnał dla poradni, że ktoś szuka pracy, nie że przyjmuje pacjentów.
+
+Gdy będzie osobne zadanie i ADR, punkt wejścia opisany w `docs/roadmap.md`, `docs/domain-model.md` i ADR 0009 wygląda tak:
+
+- nowy moduł nad `profiles` i `organizations` (roadmap: `booking`), rozmawiający w dół przez `services.py`, nie przez import wewnętrznych query;
+- osobny widok katalogu, świadomie filtrowany `visible_to_patients`, zostawiający obecną listę specjalistów bez tej flagi;
+- brak powodu wizyty i notatek; `Inquiry` zostaje wiadomością B2B przy `Listing` — nie używać go jako zgłoszenia pacjenta;
+- przed kodem, który zapisuje sam fakt wizyty: DPIA i podstawa z art. 9, hosting i podprocesorzy w EOG (ADR 0009). Samo „dorobić wyszukiwarkę” bez tego miesza dane szczególnej kategorii z tablicą ogłoszeń.
+
+`visible_to_patients` można przeczytać w `apps/profiles/models.py`. Żaden widok, formularz ani `public()` go nie czyta. Test `test_new_profiles_are_not_exposed_to_patients` sprawdza tylko domyślne `False`.
