@@ -317,7 +317,11 @@ class RoomAvailabilityBlock(models.Model):
 
 
 class Inquiry(TimeStampedModel):
-    """Message sent through a listing's contact form (delivered by email)."""
+    """Message sent through a listing's contact form (delivered by email).
+
+    ``sender`` is empty for guests (Turnstile-protected form) and for senders who
+    deleted their account.
+    """
 
     listing = models.ForeignKey(
         Listing, on_delete=models.CASCADE, related_name="inquiries", verbose_name=_("ogłoszenie")
@@ -329,6 +333,7 @@ class Inquiry(TimeStampedModel):
         related_name="sent_inquiries",
         verbose_name=_("nadawca"),
     )
+    sender_name = models.CharField(_("imię i nazwisko nadawcy"), max_length=150, blank=True)
     sender_email = models.EmailField(_("e-mail nadawcy"))
     message = models.TextField(_("wiadomość"), max_length=5000)
     recipient_email = models.EmailField(_("e-mail odbiorcy"))
@@ -341,3 +346,43 @@ class Inquiry(TimeStampedModel):
 
     def __str__(self) -> str:
         return f"{self.sender_email} → {self.listing}"
+
+
+class ListingReport(TimeStampedModel):
+    """A user's report that a listing breaks the rules (post-moderation, ADR 0012)."""
+
+    class Reason(models.TextChoices):
+        SPAM = "spam", _("Spam lub reklama")
+        FRAUD = "fraud", _("Podejrzenie oszustwa")
+        INAPPROPRIATE = "inappropriate", _("Treści nieodpowiednie lub nieetyczne")
+        OUTDATED = "outdated", _("Nieaktualne ogłoszenie")
+        OTHER = "other", _("Inny powód")
+
+    listing = models.ForeignKey(
+        Listing, on_delete=models.CASCADE, related_name="reports", verbose_name=_("ogłoszenie")
+    )
+    reporter = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="listing_reports",
+        verbose_name=_("zgłaszający"),
+    )
+    reason = models.CharField(_("powód"), max_length=20, choices=Reason.choices)
+    message = models.TextField(_("szczegóły"), max_length=1000, blank=True)
+    is_resolved = models.BooleanField(_("rozpatrzone"), default=False)
+
+    class Meta:
+        verbose_name = _("zgłoszenie ogłoszenia")
+        verbose_name_plural = _("zgłoszenia ogłoszeń")
+        ordering = ("is_resolved", "-created_at")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("listing", "reporter"),
+                condition=Q(reporter__isnull=False),
+                name="uniq_report_per_user",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.get_reason_display()}: {self.listing}"

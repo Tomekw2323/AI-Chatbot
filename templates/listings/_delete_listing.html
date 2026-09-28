@@ -1,0 +1,7 @@
+{% load i18n %}
+<details class="relative">
+  <summary class="btn-danger cursor-pointer list-none">{% translate "Usuń" %}</summary>
+  <form method="post" action="{% url 'listings:delete' pk=listing.pk %}" class="mt-2">{% csrf_token %}
+    <button class="btn-danger w-full">{% translate "Potwierdzam usunięcie" %}</button>
+  </form>
+</details>

@@ -1,6 +1,6 @@
 {% load i18n %}{% autoescape off %}{% blocktranslate with title=listing.title %}Otrzymałeś(-aś) nową wiadomość dotyczącą ogłoszenia „{{ title }}”.{% endblocktranslate %}
 
-{% translate "Od" %}: {{ sender.get_full_name|default:sender.email }} <{{ sender.email }}>
+{% translate "Od" %}: {{ inquiry.sender_name|default:inquiry.sender_email }} <{{ inquiry.sender_email }}>{% if not inquiry.sender %} ({% translate "gość, adres e-mail niezweryfikowany" %}){% endif %}
 
 {{ inquiry.message }}
 

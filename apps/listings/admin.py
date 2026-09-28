@@ -3,7 +3,7 @@ from django.db.models import QuerySet
 from django.http import HttpRequest
 from django.utils.translation import gettext_lazy as _
 
-from .models import Inquiry, Listing, RoomAvailabilityBlock
+from .models import Inquiry, Listing, ListingReport, RoomAvailabilityBlock
 
 
 class RoomAvailabilityBlockInline(admin.TabularInline[RoomAvailabilityBlock, Listing]):
@@ -51,10 +51,34 @@ class ListingAdmin(admin.ModelAdmin[Listing]):
 
 @admin.register(Inquiry)
 class InquiryAdmin(admin.ModelAdmin[Inquiry]):
-    list_display = ("listing", "sender_email", "recipient_email", "email_sent", "created_at")
+    list_display = (
+        "listing",
+        "sender_name",
+        "sender_email",
+        "recipient_email",
+        "email_sent",
+        "created_at",
+    )
     list_filter = ("email_sent",)
     search_fields = ("sender_email", "recipient_email", "listing__title")
     readonly_fields = [f.name for f in Inquiry._meta.fields]
 
     def has_add_permission(self, request: HttpRequest) -> bool:
         return False
+
+
+@admin.register(ListingReport)
+class ListingReportAdmin(admin.ModelAdmin[ListingReport]):
+    list_display = ("listing", "reason", "reporter", "is_resolved", "created_at")
+    list_filter = ("is_resolved", "reason")
+    search_fields = ("listing__title", "message", "reporter__email")
+    autocomplete_fields = ("listing", "reporter")
+    list_select_related = ("listing", "reporter")
+    actions = ("mark_resolved",)
+
+    @admin.action(description=_("Oznacz jako rozpatrzone"))
+    def mark_resolved(self, request: HttpRequest, queryset: QuerySet[ListingReport]) -> None:
+        updated = queryset.update(is_resolved=True)
+        self.message_user(
+            request, _("Rozpatrzono %(n)d zgłoszeń.") % {"n": updated}, messages.SUCCESS
+        )

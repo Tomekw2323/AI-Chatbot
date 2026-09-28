@@ -1,5 +1,6 @@
 """Who may do what with a listing. Views must go through these helpers."""
 
+from apps.core import captcha
 from apps.organizations.models import Organization
 from apps.organizations.services import AnyUser, can_manage_organization
 
@@ -24,4 +25,15 @@ def can_post_for_organization(user: AnyUser, organization: Organization) -> bool
 
 
 def can_send_inquiry(user: AnyUser, listing: Listing) -> bool:
-    return user.is_authenticated and listing.is_publicly_visible and listing.author_id != user.pk
+    """Signed-in users (not the author) always; guests only when Turnstile is configured."""
+    if not listing.is_publicly_visible:
+        return False
+    if not user.is_authenticated:
+        return captcha.is_enabled()
+    return bool(listing.author_id != user.pk)
+
+
+def can_report_listing(user: AnyUser, listing: Listing) -> bool:
+    return bool(
+        user.is_authenticated and listing.is_publicly_visible and listing.author_id != user.pk
+    )

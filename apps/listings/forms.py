@@ -4,10 +4,11 @@ from django import forms
 from django.forms import inlineformset_factory
 from django.utils.translation import gettext_lazy as _
 
+from apps.core import captcha
 from apps.core.models import Specialization
 from apps.organizations.services import AnyUser, managed_organizations
 
-from .models import Inquiry, Listing, RoomAvailabilityBlock
+from .models import Inquiry, Listing, ListingReport, RoomAvailabilityBlock
 
 OFFER_FIELDS = ("employment_type", "work_mode", "salary_min", "salary_max", "salary_period")
 ROOM_FIELDS = (
@@ -104,3 +105,33 @@ class InquiryForm(forms.ModelForm[Inquiry]):
             )
         }
         labels = {"message": _("Twoja wiadomość")}
+
+
+class GuestInquiryForm(forms.Form):
+    """Contact form for visitors without an account, protected by Turnstile (ADR 0013)."""
+
+    sender_name = forms.CharField(label=_("Imię i nazwisko"), max_length=150)
+    sender_email = forms.EmailField(label=_("Twój e-mail"))
+    message = forms.CharField(
+        label=_("Twoja wiadomość"),
+        max_length=5000,
+        widget=forms.Textarea(attrs={"rows": 5}),
+    )
+
+    def __init__(self, *args: Any, remote_ip: str | None = None, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.remote_ip = remote_ip
+
+    def clean(self) -> dict[str, Any]:
+        cleaned = super().clean() or {}
+        token = str(self.data.get(captcha.TOKEN_FIELD, ""))
+        if not captcha.verify(token, self.remote_ip):
+            raise forms.ValidationError(_("Potwierdź, że nie jesteś robotem."), code="captcha")
+        return cleaned
+
+
+class ListingReportForm(forms.ModelForm[ListingReport]):
+    class Meta:
+        model = ListingReport
+        fields = ("reason", "message")
+        widgets = {"message": forms.Textarea(attrs={"rows": 3})}

@@ -1,27 +1,47 @@
 from typing import Any
 
+from allauth.account.decorators import verified_email_required
+from django import forms
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Count, Q
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext as _
+from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_POST
 
-from apps.accounts.services import require_user
+from apps.accounts.services import has_verified_email, require_user
+from apps.core import captcha
 from apps.core.models import City
+from apps.core.ratelimit import check as ratelimit_check
+from apps.core.ratelimit import client_ip, rate_limited_response, ratelimit
 from apps.organizations.services import managed_organizations
 from apps.profiles.models import SpecialistProfile
 
 from .filters import ListingFilter
-from .forms import AvailabilityFormSet, InquiryForm, ListingForm
+from .forms import (
+    AvailabilityFormSet,
+    GuestInquiryForm,
+    InquiryForm,
+    ListingForm,
+    ListingReportForm,
+)
 from .models import InvalidTransitionError, Listing
-from .permissions import can_edit_listing, can_send_inquiry, can_view_listing
-from .services import send_inquiry
+from .permissions import (
+    can_edit_listing,
+    can_report_listing,
+    can_send_inquiry,
+    can_view_listing,
+)
+from .services import DuplicateReportError, report_listing, send_inquiry
 
 KIND_BY_URL_SLUG = {slug: kind for kind, slug in Listing.KIND_URL_SLUGS.items()}
 
@@ -86,6 +106,27 @@ def listing_list(
     return render(request, template, context)
 
 
+def _detail_context(request: HttpRequest, listing: Listing, **extra: Any) -> dict[str, Any]:
+    author_profile = (
+        SpecialistProfile.objects.public().filter(user_id=listing.author_id).first()
+        if listing.organization is None
+        else None
+    )
+    is_guest = not request.user.is_authenticated
+    context: dict[str, Any] = {
+        "listing": listing,
+        "can_edit": can_edit_listing(request.user, listing),
+        "can_send_inquiry": can_send_inquiry(request.user, listing),
+        "can_report": can_report_listing(request.user, listing),
+        "inquiry_form": GuestInquiryForm() if is_guest else InquiryForm(),
+        "report_form": ListingReportForm(),
+        "author_profile": author_profile,
+        "turnstile_site_key": settings.TURNSTILE_SITE_KEY if is_guest else "",
+    }
+    context.update(extra)
+    return context
+
+
 def listing_detail(request: HttpRequest, pk: int, slug: str) -> HttpResponse:
     listing = get_object_or_404(
         Listing.objects.select_related(
@@ -97,19 +138,7 @@ def listing_detail(request: HttpRequest, pk: int, slug: str) -> HttpResponse:
         raise Http404
     if slug != listing.slug:
         return redirect(listing, permanent=True)
-    author_profile = (
-        SpecialistProfile.objects.public().filter(user_id=listing.author_id).first()
-        if listing.organization is None
-        else None
-    )
-    context = {
-        "listing": listing,
-        "can_edit": can_edit_listing(request.user, listing),
-        "can_send_inquiry": can_send_inquiry(request.user, listing),
-        "inquiry_form": InquiryForm(),
-        "author_profile": author_profile,
-    }
-    return render(request, "listings/listing_detail.html", context)
+    return render(request, "listings/listing_detail.html", _detail_context(request, listing))
 
 
 def _save_listing_form(request: HttpRequest, listing: Listing | None) -> HttpResponse:
@@ -149,12 +178,13 @@ def _save_listing_form(request: HttpRequest, listing: Listing | None) -> HttpRes
     )
 
 
-@login_required
+@verified_email_required
+@ratelimit("listing_create")
 def listing_create(request: HttpRequest) -> HttpResponse:
     return _save_listing_form(request, None)
 
 
-@login_required
+@verified_email_required
 def listing_update(request: HttpRequest, pk: int) -> HttpResponse:
     listing = get_object_or_404(Listing, pk=pk)
     if not can_edit_listing(request.user, listing):
@@ -162,8 +192,17 @@ def listing_update(request: HttpRequest, pk: int) -> HttpResponse:
     return _save_listing_form(request, listing)
 
 
-@login_required
+def _safe_next(request: HttpRequest, default: str) -> str:
+    target = request.POST.get("next", "")
+    if target and url_has_allowed_host_and_scheme(
+        target, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+    ):
+        return target
+    return default
+
+
 @require_POST
+@verified_email_required
 def listing_transition(request: HttpRequest, pk: int, action: str) -> HttpResponse:
     listing = get_object_or_404(Listing, pk=pk)
     if not can_edit_listing(request.user, listing):
@@ -180,21 +219,87 @@ def listing_transition(request: HttpRequest, pk: int, action: str) -> HttpRespon
         messages.success(
             request, _("Status ogłoszenia: %(status)s.") % {"status": listing.get_status_display()}
         )
-    return redirect(request.POST.get("next") or "dashboard")
+    return redirect(_safe_next(request, reverse("dashboard")))
 
 
-@login_required
 @require_POST
+@login_required
+def listing_delete(request: HttpRequest, pk: int) -> HttpResponse:
+    listing = get_object_or_404(Listing, pk=pk)
+    if not can_edit_listing(request.user, listing):
+        raise PermissionDenied
+    listing.delete()
+    messages.success(request, _("Ogłoszenie zostało usunięte."))
+    return redirect("dashboard")
+
+
+@require_POST
+@sensitive_post_parameters("message", "sender_email", "sender_name")
 def inquiry_create(request: HttpRequest, pk: int) -> HttpResponse:
+    """Members need a verified email; guests pass Turnstile. Both are rate limited."""
     listing = get_object_or_404(Listing.objects.select_related("author"), pk=pk)
+    if not request.user.is_authenticated and not captcha.is_enabled():
+        return redirect_to_login(listing.get_absolute_url())
     if not can_send_inquiry(request.user, listing):
         raise PermissionDenied
-    form = InquiryForm(request.POST)
-    if form.is_valid():
-        send_inquiry(listing, require_user(request), form.cleaned_data["message"])
-        messages.success(request, _("Wiadomość została wysłana do autora ogłoszenia."))
+
+    if request.user.is_authenticated:
+        user = require_user(request)
+        if not has_verified_email(user):
+            messages.error(request, _("Potwierdź adres e-mail, aby wysyłać wiadomości."))
+            return redirect(listing)
+        if not ratelimit_check(request, "inquiry"):
+            return rate_limited_response(request)
+        member_form = InquiryForm(request.POST)
+        if member_form.is_valid():
+            send_inquiry(
+                listing, member_form.cleaned_data["message"], sender=user, sender_email=user.email
+            )
+            messages.success(request, _("Wiadomość została wysłana do autora ogłoszenia."))
+            return redirect(listing)
+        form: forms.BaseForm = member_form
+    else:
+        if not ratelimit_check(request, "inquiry_guest"):
+            return rate_limited_response(request)
+        guest_form = GuestInquiryForm(request.POST, remote_ip=client_ip(request))
+        if guest_form.is_valid():
+            data = guest_form.cleaned_data
+            send_inquiry(
+                listing,
+                data["message"],
+                sender=None,
+                sender_email=data["sender_email"],
+                sender_name=data["sender_name"],
+            )
+            messages.success(request, _("Wiadomość została wysłana do autora ogłoszenia."))
+            return redirect(listing)
+        form = guest_form
+    context = _detail_context(request, listing, inquiry_form=form)
+    return render(request, "listings/listing_detail.html", context, status=400)
+
+
+@require_POST
+@verified_email_required
+@ratelimit("listing_report")
+def listing_report(request: HttpRequest, pk: int) -> HttpResponse:
+    listing = get_object_or_404(Listing, pk=pk)
+    if not can_report_listing(request.user, listing):
+        raise PermissionDenied
+    form = ListingReportForm(request.POST)
+    if not form.is_valid():
+        messages.error(request, _("Wybierz powód zgłoszenia."))
         return redirect(listing)
-    messages.error(request, _("Wiadomość nie może być pusta."))
+    try:
+        report_listing(
+            listing,
+            require_user(request),
+            form.cleaned_data["reason"],
+            form.cleaned_data["message"],
+        )
+    except DuplicateReportError:
+        messages.info(request, _("To ogłoszenie zostało już przez Ciebie zgłoszone."))
+    else:
+        messages.success(request, _("Dziękujemy, zgłoszenie trafi do moderacji."))
     return redirect(listing)
 
 

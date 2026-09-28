@@ -7,10 +7,12 @@ from datetime import time
 from decimal import Decimal
 from typing import Any
 
+from allauth.account.models import EmailAddress
 from django.conf import settings
 from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
+from django.utils import timezone
 
 from apps.accounts.models import User
 from apps.core.models import City, Specialization, TherapyApproach
@@ -41,7 +43,9 @@ class Command(BaseCommand):
         )
         if created:
             user.set_password(DEMO_PASSWORD)
+            user.terms_accepted_at = timezone.now()
             user.save()
+            EmailAddress.objects.create(user=user, email=email, primary=True, verified=True)
         return user
 
     def _seed(self) -> None:

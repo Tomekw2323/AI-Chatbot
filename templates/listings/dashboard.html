@@ -31,6 +31,7 @@
     <a class="btn-secondary" href="{% url 'organizations:create' %}">{% translate "Dodaj organizację" %}</a>
   </section>
 </div>
+<p class="mt-6 text-sm"><a class="link" href="{% url 'privacy:my_data' %}">{% translate "Moje dane i usuwanie konta (RODO)" %}</a></p>
 
 <section class="mt-8 space-y-3">
   <div class="flex items-center justify-between">
@@ -56,8 +57,9 @@
                   <form method="post" action="{% url 'listings:transition' pk=listing.pk action='publish' %}">{% csrf_token %}<button class="btn-primary">{% translate "Opublikuj" %}</button></form>
                 {% endif %}
                 {% if listing.status != "archived" %}
-                  <form method="post" action="{% url 'listings:transition' pk=listing.pk action='archive' %}">{% csrf_token %}<button class="btn-danger">{% translate "Archiwizuj" %}</button></form>
+                  <form method="post" action="{% url 'listings:transition' pk=listing.pk action='archive' %}">{% csrf_token %}<button class="btn-secondary">{% translate "Archiwizuj" %}</button></form>
                 {% endif %}
+                {% include "listings/_delete_listing.html" %}
               </td>
             </tr>
           {% endfor %}
