@@ -7,6 +7,7 @@ requires-python = ">=3.13"
 dependencies = [
     "django>=5.2,<5.3",
     "django-allauth[socialaccount]>=65.19.4",
+    "django-csp>=4.0",
     "django-environ>=0.14.0",
     "django-filter>=26.1",
     "django-htmx>=1.29.0",
@@ -23,6 +24,7 @@ dev = [
     "factory-boy>=3.3.3",
     "import-linter>=2.15",
     "mypy>=2.3.1",
+    "pip-audit>=2.10.1",
     "pre-commit>=4.6.2",
     "pytest>=9.1.1",
     "pytest-cov>=7.1.0",
@@ -108,7 +110,19 @@ filterwarnings = [
 
 [tool.coverage.run]
 source = ["apps"]
+# Migrations are generated code; tests are not measured against themselves.
 omit = ["*/migrations/*", "*/tests/*"]
+branch = true
+
+[tool.coverage.report]
+# Floor enforced in CI. Raise it when coverage improves; never lower it silently.
+fail_under = 97
+show_missing = true
+skip_covered = true
+exclude_also = [
+    # Only reachable for type checkers.
+    "if TYPE_CHECKING:",
+]
 
 # ---------------------------------------------------------------------------
 # Import Linter: enforces module boundaries of the modular monolith.
@@ -120,6 +134,7 @@ root_packages = ["apps"]
 name = "Module layers (higher may import lower, never the reverse)"
 type = "layers"
 layers = [
+    "apps.privacy",
     "apps.listings",
     "apps.profiles | apps.organizations",
     "apps.accounts",
