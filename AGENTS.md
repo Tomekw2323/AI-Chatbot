@@ -1,6 +1,7 @@
 # AGENTS.md
 
-Instructions for AI coding agents (Cursor, Codex, Claude...) and humans working on BartoszUP.
+Read `SCOPE.md` first, then follow its links. This file stays the short always-on rule file
+for agents and humans changing code. It is not a second copy of the guide.
 Cursor-specific rules live in `.cursor/rules/*.mdc` and mirror this file.
 
 ## Product in one paragraph

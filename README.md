@@ -115,6 +115,7 @@ apps), `permissions.py` where relevant, `forms.py`, `filters.py`, `views.py`, `u
 
 ## Documentation
 
+- [SCOPE.md](SCOPE.md): entry file — read this first, then follow its links ([docs/README.md](docs/README.md) indexes the same letters)
 - [Architecture](docs/architecture.md): context and container diagrams, module boundaries
 - [Domain model](docs/domain-model.md): ER diagram, listing lifecycle, moderation
 - [Roadmap](docs/roadmap.md) (PL): phases 1–3

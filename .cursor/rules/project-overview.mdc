@@ -5,7 +5,7 @@ alwaysApply: true
 
 # BartoszUP – always-on rules
 
-Read `AGENTS.md` for full conventions. Key points:
+Read `SCOPE.md` first, then follow its links. `AGENTS.md` stays the short always-on rule file. Key points:
 
 - Django 5.2 modular monolith. Import direction (enforced by import-linter):
   `apps.privacy` → `apps.listings` → `apps.profiles | apps.organizations` → `apps.accounts` → `apps.core`.

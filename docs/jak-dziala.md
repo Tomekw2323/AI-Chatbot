@@ -6,15 +6,33 @@ BartoszUP to polska strona dla branży zdrowia psychicznego. Są na niej ogłosz
 
 Rezerwacji wizyt u specjalisty nie ma. Płatności nie ma. Zdjęć (logo, zdjęcie profilowe, zdjęcia gabinetu) nie ma. Kalendarza, w którym ktoś rezerwuje konkretną godzinę, nie ma — przy gabinecie widać tylko opis i ewentualnie stałe dni tygodnia.
 
-Są dwie różne rzeczy:
+Są dwie różne rzeczy. Ekrany wyglądają prawie tak samo: demo i gałąź `main` używają tych samych szablonów. Pełna wersja nie ma osobnego projektu graficznego. Nie ma w niej płatności ani rezerwacji wizyt — tak samo jak na demo.
 
-| | Demo, które da się otworzyć | Pełna wersja |
+| | Demo, które da się otworzyć | Pełna wersja (kod na `main`, nie wdrożona) |
 | --- | --- | --- |
-| Adres | https://bartoszup-demo.onrender.com | W pliku `render.yaml` jest przygotowany https://bartoszup.onrender.com. Ta wersja nie jest wdrożona. |
-| Pasek na górze | Żółty: „To jest demo. Dane są wymyślone i nie jest to prawdziwa usługa.” | Tego paska nie ma. |
-| Dane | Wymyślone przykłady. Po uśpieniu albo nowym wdrożeniu znikają i wgrywają się od nowa. | Prawdziwe konta i ogłoszenia, trzymane w bazie PostgreSQL. |
-| Poczta | Nie wychodzi do skrzynki. | Ma wychodzić prawdziwym mailem (trzeba podać serwer poczty przy wdrożeniu). |
+| Plik | `render.demo.yaml` | `render.yaml` |
+| Adres | https://bartoszup-demo.onrender.com | W pliku jest przygotowany https://bartoszup.onrender.com. Tej wersji nie ma w internecie. |
+| Pasek na górze | Żółty, na każdej stronie: „To jest demo. Dane są wymyślone i nie jest to prawdziwa usługa.” | Tego paska nie ma (`DEMO_MODE` wyłączone). |
+| Dane | SQLite w kontenerze. Plan Free zasypia (zwykle po około 15 minutach bez wejść), dysk znika, przy starcie próbki wgrywają się od nowa. | PostgreSQL. Konta i ogłoszenia zostają. |
+| Konta próbek | Trzy: `anna@example.com`, `piotr@example.com`, `ola@example.com`, hasło `demo12345`. Konta moderatora nie ma. | Brak próbek. Moderator wchodzi pod tajny adres, nie pod `/admin/`. |
+| Poczta | Nie wychodzi do skrzynki. Świeża rejestracja nie potwierdzi e-maila, więc nie opublikuje ogłoszenia. | Ma wychodzić, gdy przy wdrożeniu ktoś wpisze serwer poczty. |
+| Gość na ogłoszeniu | Bez kluczy Turnstile formularza nie ma. Widać „Zaloguj się, aby wysłać wiadomość do autora”. | Formularz gościa jest, gdy klucze Turnstile są wpisane. Bez kluczy zachowa się jak demo. |
+| Cron | Nie ma. Ogłoszenie znika z listy po dacie, ale nikt nie uruchamia codziennego sprzątania. | `daily_maintenance`: wygaszenie po terminie, kasowanie starych wiadomości. |
 | Płatności i wizyty pacjentów | Nie ma | Też nie ma. To późniejsze fazy, nie ten kod. |
+
+### Co widać / czego nie widać
+
+Zrzut poniżej to strona główna z lokalnego uruchomienia, czyli wygląd `main` przy wyłączonym demo. Na żywym demo jest ten sam układ, a nad menu dochodzi żółty pasek.
+
+![strona główna bez paska demo](preview/preview-home.png)
+
+| Co widać | Czego nie widać |
+| --- | --- |
+| Strona główna, lista, ogłoszenie, wizytówka, rejestracja — ten sam układ co na `main`. | Innego wyglądu „pełnej wersji”. Osobnego projektu ekranów nie ma. |
+| Żółty pasek tylko na demo. | Trwałych danych. Po uśpieniu SQLite jest puste i próbki wracają od nowa. |
+| Trzy konta próbek i ich ogłoszenia. | Maila w skrzynce. Na demo nic nie wychodzi. |
+| Zamiast formularza gościa: prośba o zalogowanie. | Turnstile, crona i panelu moderatora. To jest w `render.yaml`, a to wdrożenie nie stoi. |
+| Ceny na ogłoszeniach (widełki, 45 zł za godzinę) jako tekst do przeczytania. | Płatności w serwisie i rezerwacji wizyty. Tego nie ma ani na demo, ani w kodzie pełnej wersji. |
 
 ## Co jest w menu
 
@@ -384,6 +402,15 @@ Dodanie ogłoszenia, profilu i organizacji nic w tym kodzie nie kosztuje. Nie ma
 
 Kwota na ofercie pracy to widełki do przeczytania. Kwota przy gabinecie to cena do przeczytania. Zapłata za etat, zlecenie albo wynajem dzieje się poza stroną, między ludźmi.
 
+### Modele, których kod nie ma
+
+To kierunki z [roadmap.md](roadmap.md) (faza 2 i 3), nie funkcje. Cen tu nie ma, bo nikt ich nie ustalił.
+
+- **Ogłoszenie promowane.** Wyróżnienie na liście i na stronie głównej przez jakiś czas. Kod musiałby dostać oznaczenie opłaconego ogłoszenia i inne sortowanie. Dziś każde opublikowane ogłoszenie jest na liście tak samo.
+- **Abonament poradni.** Pakiet liczby ogłoszeń w okresie dla organizacji. Kod musiałby zapisać abonament przy organizacji i zatrzymać `publish()`, gdy pakiet się skończy. Dziś publikacja nie patrzy na opłatę.
+- **Prowizja od wynajmu gabinetu.** Ma sens dopiero, gdy jest kalendarz i ktoś kończy rezerwację. Dziś bloki dni tygodnia niczego nie rezerwują, więc nie ma od czego policzyć prowizji. Wydzielenie tego do osobnego modułu opisuje [ADR 0006](adr/0006-single-listing-table.md).
+- **Opłata od wizyty pacjenta.** Później, razem z rezerwacją B2C. Dziś nie ma konta pacjenta, cennika sesji ani umawiania. [ADR 0009](adr/0009-gdpr-eu-hosting-no-health-data.md) i faza 3 w roadmapie.
+
 ## Regulamin i polityka
 
 Obie strony mają żółtą informację: „Wersja robocza. Ostateczną treść musi przygotować lub zatwierdzić prawnik przed publicznym startem.” W regulaminie i polityce są puste miejsca na dane administratora. Polityka mówi wprost, że serwis nie przetwarza danych o zdrowiu pacjentów. Ciasteczka to sesja logowania i ochrona formularzy. Analityki i reklam śledzących nie ma.
@@ -459,3 +486,25 @@ Nie ma, i w tym kodzie nie ma czym tego zastąpić poza zwykłym opisem:
 - sprawdzenia dyplomu albo NIP.
 
 Ogłoszenie na grupie nie wygasa samo. Tutaj po 60 dniach znika z listy, dopóki autor nie opublikuje go ponownie.
+
+### Co dałoby się dobudować na tym modelu
+
+Tego kodu nie ma. Jedno zdanie, co musiałoby urosnąć. Plan i powody są w [roadmap.md](roadmap.md) i w ADR — tu ich nie powtarzam.
+
+- **Filtr „tylko B2B”.** Pole formy zatrudnienia już jest. Brakuje pozycji w filtrze listy (`apps/listings/filters.py`), nie nowej tablicy.
+- **„Szukam gabinetu”.** Nie ma rodzaju ani odznaki. Wystarczyłby nowy `kind` albo znacznik na wizytówce i filtr. Dziś zostaje zdanie w opisie.
+- **Zdjęcia** (logo, profil, gabinet). Najpierw magazyn plików w UE, nie dysk kontenera. [roadmap.md](roadmap.md), [security.md](security.md), [ADR 0011](adr/0011-hosting-render-frankfurt.md).
+- **Plik CV.** Żaden formularz nie przyjmuje pliku. Ta sama droga co zdjęcia: magazyn w UE, potem pole pliku.
+- **Zaproszenie do zespołu poradni.** Role już są. Zaproszenie ze strony nie: członka dodaje moderator w adminie. [roadmap.md](roadmap.md).
+- **Sprawdzenie uprawnień.** Numer certyfikatu to zwykły tekst. Sprawdzenie w rejestrze byłoby osobnym krokiem, nie ma go w modelu.
+- **Katalog pacjentów.** Flaga `visible_to_patients` jest wyłączona i żaden ekran jej nie używa. Podłączenie jej do listy specjalistów nie tworzy cennika ani rezerwacji. Faza 3, [ADR 0009](adr/0009-gdpr-eu-hosting-no-health-data.md).
+
+### Kierunki techniczne, które architektura już zakłada
+
+Też nie są zbudowane. Wskazują je istniejące ADR i roadmapa.
+
+- Magazyn plików w UE, zanim pojawi się jakiekolwiek zdjęcie albo CV. [ADR 0011](adr/0011-hosting-render-frankfurt.md), [security.md](security.md).
+- Kolejka maili. Dziś mail idzie w trakcie otwarcia strony; błąd zostawia wiadomość w bazie i nie ponawia wysyłki. [architecture.md](architecture.md), faza 2 w [roadmap.md](roadmap.md).
+- Drugi składnik logowania (2FA) dla personelu, zanim urośnie zespół moderatorów. [ADR 0008](adr/0008-authentication-django-allauth.md), [ADR 0015](adr/0015-http-security-hardening.md).
+- Wydzielenie wynajmu gabinetu do modułu `rooms`, gdy powstanie kalendarz rezerwacji. Do tego czasu zostaje jeden deploy. [ADR 0006](adr/0006-single-listing-table.md), [ADR 0002](adr/0002-modular-monolith.md).
+- Płatności (promowanie, abonament, prowizja, później wizyta). Faza 2 i 3 w [roadmap.md](roadmap.md). W tym kodzie ich nie ma.
