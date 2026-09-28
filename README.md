@@ -5,6 +5,26 @@
 > na godziny/dni oraz wizytówki specjalistów i placówek. Plan dla właściciela:
 > [docs/roadmap.md](docs/roadmap.md).
 
+## Podgląd
+
+To podgląd lokalny, a nie działająca strona; przykładowe ogłoszenia nie znajdują się w bazie danych wdrożonego serwera.
+
+![strona główna](docs/preview/preview-home.png)
+
+*strona główna*
+
+![lista ogłoszeń](docs/preview/preview-listings.png)
+
+*lista ogłoszeń*
+
+![ogłoszenie o pracę](docs/preview/preview-listing.png)
+
+*ogłoszenie o pracę*
+
+![rejestracja](docs/preview/preview-signup.png)
+
+*rejestracja*
+
 BartoszUP is a Polish-language, server-rendered Django application with two MVP pillars:
 
 1. **Job board**: job, internship and volunteering offers from clinics/NGOs/public institutions,
