@@ -7,6 +7,7 @@
   <title>{% block title %}{% translate "Praca, staże i gabinety w psychologii" %}{% endblock %} | {{ SITE_NAME }}</title>
   <meta name="description" content="{% block meta_description %}{% translate "Oferty pracy, staże, wolontariaty i wynajem gabinetów dla psychologów i psychoterapeutów w całej Polsce." %}{% endblock %}">
   {% block canonical %}<link rel="canonical" href="{{ SITE_URL }}{{ request.path }}">{% endblock %}
+  <meta name="htmx-config" content='{"includeIndicatorStyles": false}'>
   {% tailwind_css %}
   <script src="{% static 'vendor/htmx-2.0.11.min.js' %}" defer></script>
   {% block extra_head %}{% endblock %}
@@ -48,7 +49,11 @@
   <footer class="border-t border-slate-200 bg-white">
     <div class="mx-auto flex max-w-6xl flex-wrap justify-between gap-4 px-4 py-6 text-sm text-slate-500">
       <p>&copy; {% now "Y" %} {{ SITE_NAME }}. {% translate "Platforma dla branży zdrowia psychicznego." %}</p>
-      <p>{% translate "Regulamin i polityka prywatności – wkrótce." %}</p>
+      <p class="flex gap-4">
+        <a class="hover:underline" href="{% url 'privacy:terms' %}">{% translate "Regulamin" %}</a>
+        <a class="hover:underline" href="{% url 'privacy:policy' %}">{% translate "Polityka prywatności" %}</a>
+        {% if user.is_authenticated %}<a class="hover:underline" href="{% url 'privacy:my_data' %}">{% translate "Moje dane" %}</a>{% endif %}
+      </p>
     </div>
   </footer>
   {% block extra_body %}{% endblock %}

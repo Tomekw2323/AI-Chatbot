@@ -9,6 +9,7 @@ from pathlib import Path
 
 import django_stubs_ext
 import environ
+from csp.constants import NONE, SELF, UNSAFE_INLINE
 from django.utils.translation import gettext_lazy as _
 
 # Makes generic classes such as ``ModelAdmin[Model]`` subscriptable at runtime.
@@ -50,6 +51,7 @@ THIRD_PARTY_APPS = [
     "django_filters",
     "django_htmx",
     "django_tailwind_cli",
+    "csp",
 ]
 # Order reflects the allowed dependency direction (see docs/architecture.md):
 # an app may import only from apps listed *above* it.
@@ -59,6 +61,7 @@ LOCAL_APPS = [
     "apps.organizations",
     "apps.profiles",
     "apps.listings",
+    "apps.privacy",
 ]
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
@@ -72,6 +75,8 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "csp.middleware.CSPMiddleware",
+    "apps.core.middleware.SecurityHeadersMiddleware",
     "allauth.account.middleware.AccountMiddleware",
     "django_htmx.middleware.HtmxMiddleware",
 ]
@@ -103,6 +108,15 @@ DATABASES["default"]["CONN_MAX_AGE"] = env.int("DATABASE_CONN_MAX_AGE", default=
 DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# Shared across workers/instances without extra infrastructure; used by allauth's
+# rate limits. Created by ``manage.py createcachetable``.
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.db.DatabaseCache",
+        "LOCATION": "django_cache",
+    }
+}
+
 # ---------------------------------------------------------------------------
 # Authentication (django-allauth, email-only login + Google)
 # ---------------------------------------------------------------------------
@@ -113,7 +127,10 @@ AUTHENTICATION_BACKENDS = [
 ]
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "OPTIONS": {"min_length": 10},
+    },
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
@@ -128,6 +145,13 @@ ACCOUNT_EMAIL_VERIFICATION = env("ACCOUNT_EMAIL_VERIFICATION", default="mandator
 ACCOUNT_SIGNUP_FORM_CLASS = "apps.accounts.forms.SignupForm"
 ACCOUNT_LOGOUT_ON_GET = False
 ACCOUNT_EMAIL_SUBJECT_PREFIX = "[BartoszUP] "
+ACCOUNT_PREVENT_ENUMERATION = True
+# Merged into allauth's defaults; tighter than defaults for signup and failed logins.
+ACCOUNT_RATE_LIMITS = {
+    "signup": "10/h/ip",
+    "login_failed": "10/m/ip,5/15m/key",
+    "reset_password": "10/h/ip,3/h/key",
+}
 
 SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
 SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
@@ -140,6 +164,61 @@ if GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET:
     SOCIALACCOUNT_PROVIDERS["google"]["APPS"] = [
         {"client_id": GOOGLE_CLIENT_ID, "secret": GOOGLE_CLIENT_SECRET, "key": ""}
     ]
+
+# ---------------------------------------------------------------------------
+# Security (see docs/security.md)
+# ---------------------------------------------------------------------------
+# Admin lives at an unguessable path in production (DJANGO_ADMIN_URL, ADR 0015).
+ADMIN_URL = env("DJANGO_ADMIN_URL", default="admin/")
+
+# Number of reverse proxies in front of the app that append to X-Forwarded-For
+# (Render: 1). 0 means "use REMOTE_ADDR". Wrong values let clients spoof their IP.
+TRUSTED_PROXY_COUNT = env.int("TRUSTED_PROXY_COUNT", default=0)
+ALLAUTH_TRUSTED_PROXY_COUNT = TRUSTED_PROXY_COUNT
+
+# Application rate limits, "<count>/<period>/<user|ip>", see apps/core/ratelimit.py.
+RATE_LIMITS = {
+    "listing_create": "10/h/user,50/d/user",
+    "inquiry": "10/h/user,30/h/ip",
+    "inquiry_guest": "3/h/ip,10/d/ip",
+    "listing_report": "10/h/user",
+    "organization_create": "5/d/user",
+    "data_export": "5/h/user",
+}
+LISTING_REPORTS_AUTO_FLAG = env.int("LISTING_REPORTS_AUTO_FLAG", default=3)
+INQUIRY_RETENTION_DAYS = env.int("INQUIRY_RETENTION_DAYS", default=365)
+
+# Cloudflare Turnstile protects guest forms; guest contact is disabled without keys.
+TURNSTILE_SITE_KEY = env("TURNSTILE_SITE_KEY", default="")
+TURNSTILE_SECRET_KEY = env("TURNSTILE_SECRET_KEY", default="")
+
+CSRF_COOKIE_HTTPONLY = True
+SESSION_COOKIE_HTTPONLY = True
+X_FRAME_OPTIONS = "DENY"
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin"
+PERMISSIONS_POLICY = "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+
+TURNSTILE_ORIGIN = "https://challenges.cloudflare.com"
+CONTENT_SECURITY_POLICY = {
+    "DIRECTIVES": {
+        "default-src": [SELF],
+        "script-src": [SELF, TURNSTILE_ORIGIN],
+        # Inline style attributes are used by Django admin; no inline scripts anywhere.
+        "style-src": [SELF, UNSAFE_INLINE],
+        "img-src": [SELF, "data:"],
+        "font-src": [SELF],
+        "connect-src": [SELF],
+        "frame-src": [TURNSTILE_ORIGIN],
+        "frame-ancestors": [NONE],
+        "form-action": [SELF, "https://accounts.google.com"],
+        "base-uri": [SELF],
+        "object-src": [NONE],
+    }
+}
+
+# No file uploads yet (see docs/security.md, "File uploads"); keep request bodies small.
+DATA_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024
 
 # ---------------------------------------------------------------------------
 # Internationalisation: Polish-only UI, but every string goes through gettext

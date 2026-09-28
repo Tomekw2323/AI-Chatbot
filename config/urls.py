@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib import admin
 from django.contrib.sitemaps.views import sitemap
 from django.http import HttpRequest, HttpResponse
@@ -20,7 +21,8 @@ urlpatterns = [
     path("specjalisci/", include("apps.profiles.urls")),
     path("organizacje/", include("apps.organizations.urls")),
     path("konto/", include("allauth.urls")),
-    path("admin/", admin.site.urls),
+    path("prywatnosc/", include("apps.privacy.urls")),
+    path(settings.ADMIN_URL, admin.site.urls),
     path("sitemap.xml", sitemap, {"sitemaps": sitemaps}, name="sitemap"),
     path(
         "robots.txt",

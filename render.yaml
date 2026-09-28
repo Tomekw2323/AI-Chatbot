@@ -9,7 +9,7 @@ services:
     dockerfilePath: ./Dockerfile
     dockerContext: .
     healthCheckPath: /healthz/
-    preDeployCommand: python manage.py migrate --noinput
+    preDeployCommand: python manage.py migrate --noinput && python manage.py createcachetable
     envVars:
       - key: DJANGO_SETTINGS_MODULE
         value: config.settings.prod
@@ -29,6 +29,9 @@ services:
         value: mandatory
       - key: WEB_CONCURRENCY
         value: "2"
+      # Render's proxy appends the client IP to X-Forwarded-For (verify after first deploy).
+      - key: TRUSTED_PROXY_COUNT
+        value: "1"
       # Set in the Render dashboard (secrets are never committed):
       - key: EMAIL_URL
         sync: false
@@ -40,6 +43,13 @@ services:
         sync: false
       - key: DJANGO_ADMIN_EMAILS
         sync: false
+      # Unguessable admin path, e.g. "zaplecze-7f3k9q2m/" (letters, digits, dashes, trailing slash).
+      - key: DJANGO_ADMIN_URL
+        sync: false
+      - key: TURNSTILE_SITE_KEY
+        sync: false
+      - key: TURNSTILE_SECRET_KEY
+        sync: false
 
   - type: cron
     name: bartoszup-expire-listings
@@ -49,7 +59,7 @@ services:
     dockerfilePath: ./Dockerfile
     dockerContext: .
     schedule: "15 3 * * *"
-    dockerCommand: python manage.py expire_listings
+    dockerCommand: python manage.py daily_maintenance
     envVars:
       - key: DJANGO_SETTINGS_MODULE
         value: config.settings.prod
@@ -61,6 +71,8 @@ services:
           property: connectionString
       - key: DJANGO_ALLOWED_HOSTS
         value: localhost
+      - key: DJANGO_ADMIN_URL
+        value: not-served-by-cron/
 
 databases:
   - name: bartoszup-db

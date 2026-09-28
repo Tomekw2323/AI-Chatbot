@@ -38,6 +38,7 @@ services:
       EMAIL_URL: smtp://mailpit:1025
     command: >
       sh -c "python manage.py migrate --noinput &&
+             python manage.py createcachetable &&
              python manage.py loaddata reference_data &&
              python manage.py tailwind runserver 0.0.0.0:8000"
     ports:

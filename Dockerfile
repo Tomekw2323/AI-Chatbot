@@ -32,7 +32,8 @@ COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
 COPY . .
 RUN DJANGO_SETTINGS_MODULE=config.settings.prod \
-    DJANGO_SECRET_KEY=build-only \
+    DJANGO_SECRET_KEY=build-only-not-used-at-runtime-0000000000000000000000 \
+    DJANGO_ADMIN_URL=build-only/ \
     DATABASE_URL=sqlite:///tmp/build.db \
     sh -c "python manage.py tailwind build && python manage.py collectstatic --noinput" \
     && rm -rf .django_tailwind_cli
