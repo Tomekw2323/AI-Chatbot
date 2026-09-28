@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Regulamin" %}{% endblock %}
+{% block content %}
+<article class="card mx-auto max-w-3xl space-y-4 leading-relaxed">
+  <h1>{% translate "Regulamin serwisu" %}</h1>
+  <p class="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">{% translate "Wersja robocza. Ostateczną treść musi przygotować lub zatwierdzić prawnik przed publicznym startem." %}</p>
+  <h2>{% translate "1. Postanowienia ogólne" %}</h2>
+  <p>{% translate "Serwis BartoszUP umożliwia publikowanie ogłoszeń o pracy, stażach, wolontariacie i wynajmie gabinetów w branży zdrowia psychicznego oraz prowadzenie wizytówek specjalistów i organizacji." %}</p>
+  <h2>{% translate "2. Konto" %}</h2>
+  <p>{% translate "Publikowanie treści wymaga konta z potwierdzonym adresem e-mail. Użytkownik odpowiada za prawdziwość publikowanych danych." %}</p>
+  <h2>{% translate "3. Zasady publikacji i moderacja" %}</h2>
+  <p>{% translate "Zakazane są treści niezgodne z prawem, wprowadzające w błąd, dyskryminujące oraz spam. Ogłoszenia mogą być zgłaszane przez użytkowników i ukrywane przez moderację." %}</p>
+  <h2>{% translate "4. Dane osobowe" %}</h2>
+  <p>{% translate "Zasady przetwarzania danych opisuje polityka prywatności." %} <a class="link" href="{% url 'privacy:policy' %}">{% translate "Polityka prywatności" %}</a></p>
+  <h2>{% translate "5. Kontakt" %}</h2>
+  <p>{% translate "[Dane administratora serwisu i adres kontaktowy – do uzupełnienia.]" %}</p>
+</article>
+{% endblock %}

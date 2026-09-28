@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Polityka prywatności" %}{% endblock %}
+{% block content %}
+<article class="card mx-auto max-w-3xl space-y-4 leading-relaxed">
+  <h1>{% translate "Polityka prywatności" %}</h1>
+  <p class="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">{% translate "Wersja robocza. Ostateczną treść musi przygotować lub zatwierdzić prawnik przed publicznym startem." %}</p>
+  <h2>{% translate "Administrator danych" %}</h2>
+  <p>{% translate "[Nazwa, adres i dane kontaktowe administratora – do uzupełnienia.]" %}</p>
+  <h2>{% translate "Jakie dane przetwarzamy i po co" %}</h2>
+  <ul class="list-disc space-y-1 pl-6">
+    <li>{% translate "Dane konta (e-mail, imię, nazwisko) – świadczenie usługi (art. 6 ust. 1 lit. b RODO)." %}</li>
+    <li>{% translate "Treść profilu, ogłoszeń i organizacji – publikowane na Twoje życzenie (art. 6 ust. 1 lit. b)." %}</li>
+    <li>{% translate "Wiadomości do autorów ogłoszeń – przekazanie wiadomości adresatowi (art. 6 ust. 1 lit. b i f)." %}</li>
+    <li>{% translate "Adres IP i dzienniki techniczne – bezpieczeństwo i ochrona przed nadużyciami (art. 6 ust. 1 lit. f)." %}</li>
+  </ul>
+  <p>{% translate "Serwis nie przetwarza danych o zdrowiu pacjentów." %}</p>
+  <h2>{% translate "Pliki cookie" %}</h2>
+  <p>{% translate "Używamy wyłącznie niezbędnych plików cookie (sesja logowania, ochrona CSRF). Nie stosujemy analityki ani reklam śledzących. Formularz kontaktowy dla gości chroni Cloudflare Turnstile." %}</p>
+  <h2>{% translate "Gdzie przechowujemy dane" %}</h2>
+  <p>{% translate "Na serwerach w Unii Europejskiej (Frankfurt). Lista podmiotów przetwarzających – do uzupełnienia." %}</p>
+  <h2>{% translate "Twoje prawa" %}</h2>
+  <p>{% translate "Masz prawo dostępu do danych, ich sprostowania, usunięcia, ograniczenia przetwarzania, przenoszenia oraz sprzeciwu, a także skargi do Prezesa UODO. Dane pobierzesz i konto usuniesz samodzielnie na stronie „Moje dane”." %}{% if user.is_authenticated %} <a class="link" href="{% url 'privacy:my_data' %}">{% translate "Moje dane" %}</a>{% endif %}</p>
+  <h2>{% translate "Jak długo przechowujemy dane" %}</h2>
+  <p>{% translate "Do czasu usunięcia konta; wiadomości do ogłoszeń – do 12 miesięcy [do potwierdzenia]." %}</p>
+</article>
+{% endblock %}

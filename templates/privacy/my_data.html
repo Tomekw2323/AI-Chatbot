@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Moje dane" %}{% endblock %}
+{% block content %}
+<h1 class="mb-6">{% translate "Moje dane (RODO)" %}</h1>
+<div class="grid gap-6 lg:grid-cols-2">
+  <section class="card space-y-3">
+    <h2>{% translate "Pobierz swoje dane" %}</h2>
+    <p class="text-sm text-slate-600">{% translate "Plik JSON z danymi konta, profilu, członkostw, ogłoszeń i wiadomości (art. 15 i 20 RODO)." %}</p>
+    <form method="post" action="{% url 'privacy:export' %}">{% csrf_token %}
+      <button class="btn-secondary">{% translate "Pobierz dane" %}</button>
+    </form>
+  </section>
+  <section class="card space-y-3">
+    <h2>{% translate "Usuń konto" %}</h2>
+    <p class="text-sm text-slate-600">{% translate "Usuniemy konto, profil, prywatne ogłoszenia i wysłane wiadomości. Ogłoszenia organizacji pozostaną w organizacji. Tej operacji nie można cofnąć." %}</p>
+    <form method="post" action="{% url 'privacy:delete_account' %}" class="space-y-3" novalidate>{% csrf_token %}
+      {% include "includes/form_fields.html" with form=form %}
+      <button class="btn-danger">{% translate "Usuń konto na zawsze" %}</button>
+    </form>
+  </section>
+</div>
+<p class="mt-6 text-sm text-slate-600">{% translate "Zmiana e-maila i hasła:" %} <a class="link" href="{% url 'account_email' %}">{% translate "adresy e-mail" %}</a> · <a class="link" href="{% url 'account_change_password' %}">{% translate "hasło" %}</a></p>
+{% endblock %}
