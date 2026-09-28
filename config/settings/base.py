@@ -29,6 +29,9 @@ SITE_ID = 1
 SITE_NAME = "BartoszUP"
 SITE_URL = env("SITE_URL", default="http://localhost:8000")
 
+# Public free demo (config.settings.demo). Production and local dev stay off.
+DEMO_MODE = False
+
 # ---------------------------------------------------------------------------
 # Applications
 # ---------------------------------------------------------------------------

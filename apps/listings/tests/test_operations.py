@@ -45,11 +45,14 @@ class TestCommands:
         counts = (User.objects.count(), Listing.objects.count())
         call_command("seed_demo", stdout=None)
         assert (User.objects.count(), Listing.objects.count()) == counts
-        assert Listing.objects.public().count() == 6
+        assert Listing.objects.public().count() == 7
+        assert Listing.objects.filter(kind=Listing.Kind.JOB, city__slug="krakow").exists()
+        assert Listing.objects.filter(kind=Listing.Kind.ROOM_RENTAL, city__slug="wroclaw").exists()
         assert RoomAvailabilityBlock.objects.count() == 3
 
     def test_seed_demo_refuses_without_debug(self, settings) -> None:
         settings.DEBUG = False
+        settings.DEMO_MODE = False
         with pytest.raises(CommandError):
             call_command("seed_demo")
 

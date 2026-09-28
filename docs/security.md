@@ -177,5 +177,6 @@ Until then `DATA_UPLOAD_MAX_MEMORY_SIZE` is 1 MB and no view accepts files.
 | Email deliverability/spoofing | Our mails land in spam or get spoofed | SPF, DKIM, DMARC on the sending domain |
 | Backups | Deleted accounts persist in backups until rotation | Document backup retention in the privacy policy |
 | Legal texts | Draft terms/policy are not legally valid | Lawyer review before public launch |
+| Public demo (`DEMO_MODE`, ADR 0017) | A visitor can sign up; the disk is ephemeral and may not be the paid EU launch | Banner on every page; fake `@example.com` samples; no real personal data |
 | Penetration test | Unknown unknowns | External test before Phase 2 (payments) |
 | `style-src 'unsafe-inline'` | CSS injection is possible if escaping ever fails | Move admin to nonces/hashes or a separate CSP for `/admin` |

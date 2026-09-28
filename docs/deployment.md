@@ -3,6 +3,10 @@
 Target: **Render, region Frankfurt (EU)**, defined in [`render.yaml`](../render.yaml)
 (ADR 0011). **Nothing is deployed yet.** The Docker image is portable (Fly.io, Railway, a VPS).
 
+The free click-through demo is a different file, [`render.demo.yaml`](../render.demo.yaml)
+(ADR 0017): one free web service and SQLite. Do not apply `render.yaml` for that demo.
+This document is the later paid launch.
+
 ## Components
 
 | Render resource | Purpose | Plan (start) |

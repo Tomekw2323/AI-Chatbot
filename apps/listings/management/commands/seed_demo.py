@@ -1,6 +1,7 @@
-"""Create demo users, organizations, profiles and listings for local development.
+"""Create fake users, organizations, profiles and listings.
 
-Idempotent: re-running it does not duplicate data. Never run in production.
+Idempotent: re-running it does not duplicate data. Allowed in local development
+(DEBUG) and the public free demo (DEMO_MODE). Refuses production.
 """
 
 from datetime import time
@@ -24,11 +25,11 @@ DEMO_PASSWORD = "demo12345"  # noqa: S105
 
 
 class Command(BaseCommand):
-    help = "Seed demo data (users password: demo12345). Development only."
+    help = "Seed fake demo data (sample password: demo12345). Development or demo mode."
 
     def handle(self, *args: Any, **options: Any) -> None:
-        if not settings.DEBUG:
-            raise CommandError("seed_demo is only allowed with DEBUG=True.")
+        if not settings.DEBUG and not settings.DEMO_MODE:
+            raise CommandError("seed_demo is only allowed in development or demo mode.")
         if not City.objects.exists():
             call_command("loaddata", "reference_data")
         with transaction.atomic():
@@ -55,7 +56,9 @@ class Command(BaseCommand):
         spec = {s.slug: s for s in Specialization.objects.all()}
         approach = {a.slug: a for a in TherapyApproach.objects.all()}
 
-        self._user("admin@example.com", "Admin", "BartoszUP", is_staff=True, is_superuser=True)
+        # The public demo is on the internet. A known superuser password must not ship with it.
+        if settings.DEBUG:
+            self._user("admin@example.com", "Admin", "BartoszUP", is_staff=True, is_superuser=True)
         anna = self._user("anna@example.com", "Anna", "Kowalska")
         piotr = self._user("piotr@example.com", "Piotr", "Nowak")
         ola = self._user("ola@example.com", "Aleksandra", "Wiśniewska")
@@ -121,6 +124,19 @@ class Command(BaseCommand):
             listing.specializations.set(specializations)
             return listing
 
+        create(
+            kind=Listing.Kind.JOB,
+            title="Psychoterapeuta w poradni – Kraków",
+            description=(
+                "Wymyślona oferta demonstracyjna: poradnia w Krakowie szuka "
+                "psychoterapeuty na część etatu. To nie jest prawdziwa rekrutacja."
+            ),
+            author=piotr,
+            city=krakow,
+            employment_type=Listing.EmploymentType.EMPLOYMENT_CONTRACT,
+            work_mode=Listing.WorkMode.HYBRID,
+            specializations=[spec["psychoterapia-indywidualna-doroslych"]],
+        )
         create(
             kind=Listing.Kind.JOB,
             title="Psycholog dziecięcy – poradnia, 3/4 etatu",

@@ -76,6 +76,15 @@ CI (GitHub Actions, `.github/workflows/ci.yml`) runs the same lint (incl. bandit
 type, boundary, migration and test checks with a coverage floor, a dependency audit, and a
 production Docker build.
 
+## Render files (do not mix them up)
+
+| File | What it is |
+| --- | --- |
+| [`render.yaml`](render.yaml) | Later **paid** launch: Frankfurt web service (Starter), Postgres (Basic 256 MB) and a cron job. Do not use this file for the free demo. |
+| [`render.demo.yaml`](render.demo.yaml) | **Free demo only**: one Docker web service on Render's free plan, SQLite, no database and no cron. A banner says the data is made up. This is not the public launch. |
+
+The demo settings module is `config.settings.demo`. It does not use `DATABASE_URL`. Production and local development stay on PostgreSQL (`config.settings.prod` / `config.settings.dev`).
+
 ## Tech stack
 
 Python 3.13, Django 5.2 LTS, PostgreSQL 17, django-allauth (email + Google), django-filter,
@@ -86,7 +95,7 @@ import-linter, pre-commit. Decisions and their rationale: [docs/adr/](docs/adr/)
 ## Project structure
 
 ```
-config/               Django project: settings (base/dev/test/prod), urls, sitemaps, wsgi
+config/               Django project: settings (base/dev/test/prod/demo), urls, sitemaps, wsgi
 apps/
   core/               Reference data: voivodeships, cities, specializations, therapy approaches
   accounts/           Custom User (email login), signup form

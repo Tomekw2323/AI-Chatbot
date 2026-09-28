@@ -24,5 +24,6 @@ the old one (do not rewrite history).
 | [0014](0014-rate-limiting-in-postgresql.md) | Rate limiting stored in PostgreSQL | Accepted |
 | [0015](0015-http-security-hardening.md) | HTTP security hardening: CSP, headers, cookies, admin path | Accepted |
 | [0016](0016-gdpr-self-service-and-retention.md) | GDPR self-service: export, deletion, retention, no tracking | Accepted |
+| [0017](0017-free-demo-sqlite.md) | Free public demo uses SQLite; production stays on Postgres | Accepted |
 
 Template for new records: copy [template.md](template.md).
