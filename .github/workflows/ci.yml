@@ -11,7 +11,7 @@ concurrency:
 
 jobs:
   lint:
-    name: Lint, types, boundaries
+    name: Lint, types, boundaries, security rules
     runs-on: ubuntu-latest
     env:
       DJANGO_SETTINGS_MODULE: config.settings.test
@@ -25,7 +25,7 @@ jobs:
       - run: uv sync --frozen
       - name: ruff format
         run: uv run ruff format --check .
-      - name: ruff check
+      - name: ruff check (includes bandit "S" security rules)
         run: uv run ruff check .
       - name: mypy
         run: uv run mypy .
@@ -33,6 +33,18 @@ jobs:
         run: uv run lint-imports
       - name: Missing migrations
         run: uv run python manage.py makemigrations --check --dry-run
+
+  security:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --frozen
+      - name: pip-audit (known CVEs in locked dependencies)
+        run: uv run pip-audit --progress-spinner off --strict
 
   test:
     name: Tests (PostgreSQL)
@@ -63,8 +75,9 @@ jobs:
           DJANGO_SETTINGS_MODULE: config.settings.prod
           DJANGO_SECRET_KEY: ci-only-but-long-enough-to-pass-the-deploy-check-0123456789abcdef
           DJANGO_ALLOWED_HOSTS: example.com
-      - name: pytest
-        run: uv run pytest --create-db --cov --cov-report=term-missing
+          DJANGO_ADMIN_URL: ci-admin-path/
+      - name: pytest (fails below the coverage floor in pyproject.toml)
+        run: uv run pytest --create-db --cov
 
   docker:
     name: Docker image builds
