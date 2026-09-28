@@ -1,0 +1,15 @@
+{% load i18n listing_tags %}
+{% if listings %}
+  <ul class="divide-y divide-slate-200 rounded-xl border border-slate-200 bg-white">
+    {% for listing in listings %}
+      <li class="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
+        <a class="link" href="{{ listing.get_absolute_url }}">{{ listing.title }}</a>
+        <span class="flex items-center gap-2 text-xs text-slate-500">
+          <span class="badge {% kind_badge_class listing.kind %}">{{ listing.get_kind_display }}</span>{{ listing.city.name }}
+        </span>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p class="text-sm text-slate-500">{% translate "Brak aktywnych ogłoszeń." %}</p>
+{% endif %}

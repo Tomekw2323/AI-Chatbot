@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Brak dostępu" %}{% endblock %}
+{% block content %}
+<div class="card mx-auto max-w-lg space-y-3 text-center">
+  <h1>{% translate "Brak dostępu" %}</h1>
+  <p class="text-slate-600">{% translate "Nie masz uprawnień do tej strony." %}</p>
+</div>
+{% endblock %}

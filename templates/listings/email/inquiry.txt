@@ -1,0 +1,10 @@
+{% load i18n %}{% autoescape off %}{% blocktranslate with title=listing.title %}Otrzymałeś(-aś) nową wiadomość dotyczącą ogłoszenia „{{ title }}”.{% endblocktranslate %}
+
+{% translate "Od" %}: {{ sender.get_full_name|default:sender.email }} <{{ sender.email }}>
+
+{{ inquiry.message }}
+
+---
+{% translate "Aby odpowiedzieć, po prostu odpisz na tego e-maila." %}
+{% translate "Ogłoszenie" %}: {{ site_url }}{{ listing.get_absolute_url }}
+{% endautoescape %}

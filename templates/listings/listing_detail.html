@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% load i18n listing_tags %}
+{% block title %}{{ listing.title }} – {{ listing.city.name }}{% endblock %}
+{% block meta_description %}{{ listing.get_kind_display }}, {{ listing.city.name }}: {{ listing.description|truncatechars:150 }}{% endblock %}
+{% block content %}
+<div class="grid gap-8 lg:grid-cols-[1fr_20rem]">
+  <article class="space-y-6">
+    {% if not listing.is_publicly_visible %}
+      <div class="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+        {% blocktranslate with status=listing.get_status_display %}To ogłoszenie nie jest widoczne publicznie (status: {{ status }}).{% endblocktranslate %}
+        {% if listing.is_flagged %}{% translate "Zostało ukryte przez moderację." %}{% endif %}
+      </div>
+    {% endif %}
+    <header class="space-y-2">
+      <div class="flex flex-wrap items-center gap-2 text-sm">
+        <a class="badge {% kind_badge_class listing.kind %}" href="{% url 'listings:list_by_kind' kind_slug=listing.kind_url_slug %}">{{ listing.get_kind_display }}</a>
+        <a class="text-slate-500 hover:underline" href="{% url 'listings:list_by_kind_city' kind_slug=listing.kind_url_slug city_slug=listing.city.slug %}">{{ listing.city.name }}, {{ listing.city.voivodeship.name }}</a>
+      </div>
+      <h1>{{ listing.title }}</h1>
+      {% if listing.organization %}
+        <p><a class="link" href="{{ listing.organization.get_absolute_url }}">{{ listing.organization.name }}</a></p>
+      {% elif author_profile %}
+        <p><a class="link" href="{{ author_profile.get_absolute_url }}">{{ author_profile.display_name }}</a></p>
+      {% endif %}
+    </header>
+
+    <dl class="card grid gap-4 text-sm sm:grid-cols-2">
+      {% if listing.is_room_rental %}
+        <div><dt class="text-slate-500">{% translate "Cena" %}</dt><dd class="font-medium">{{ listing.price_amount|floatformat:"-2" }} zł {{ listing.get_price_unit_display }}</dd></div>
+        {% if listing.room_area_m2 %}<div><dt class="text-slate-500">{% translate "Powierzchnia" %}</dt><dd class="font-medium">{{ listing.room_area_m2 }} m²</dd></div>{% endif %}
+        {% if listing.address %}<div><dt class="text-slate-500">{% translate "Adres" %}</dt><dd class="font-medium">{{ listing.address }}</dd></div>{% endif %}
+        {% if listing.amenities %}<div><dt class="text-slate-500">{% translate "Wyposażenie" %}</dt><dd class="font-medium">{{ listing.amenities }}</dd></div>{% endif %}
+      {% else %}
+        {% if listing.employment_type %}<div><dt class="text-slate-500">{% translate "Forma zatrudnienia" %}</dt><dd class="font-medium">{{ listing.get_employment_type_display }}</dd></div>{% endif %}
+        {% if listing.work_mode %}<div><dt class="text-slate-500">{% translate "Tryb pracy" %}</dt><dd class="font-medium">{{ listing.get_work_mode_display }}</dd></div>{% endif %}
+        {% if listing.salary_min or listing.salary_max %}<div><dt class="text-slate-500">{% translate "Wynagrodzenie" %}</dt><dd class="font-medium">{% if listing.salary_min %}{{ listing.salary_min }}{% endif %}{% if listing.salary_min and listing.salary_max %}–{% endif %}{% if listing.salary_max %}{{ listing.salary_max }}{% endif %} zł {{ listing.get_salary_period_display }}</dd></div>{% endif %}
+        {% if listing.address %}<div><dt class="text-slate-500">{% translate "Miejsce" %}</dt><dd class="font-medium">{{ listing.address }}</dd></div>{% endif %}
+      {% endif %}
+      {% if listing.expires_at %}<div><dt class="text-slate-500">{% translate "Ważne do" %}</dt><dd class="font-medium">{{ listing.expires_at|date:"j E Y" }}</dd></div>{% endif %}
+    </dl>
+
+    <section class="whitespace-pre-line leading-relaxed">{{ listing.description }}</section>
+
+    {% if listing.is_room_rental %}
+      <section class="space-y-3">
+        <h2>{% translate "Dostępność" %}</h2>
+        {% if listing.availability_blocks.all %}
+          <ul class="grid gap-2 text-sm sm:grid-cols-2">
+            {% for block in listing.availability_blocks.all %}<li class="card py-2">{{ block }}</li>{% endfor %}
+          </ul>
+        {% endif %}
+        {% if listing.availability_description %}<p class="whitespace-pre-line text-sm text-slate-700">{{ listing.availability_description }}</p>{% endif %}
+      </section>
+    {% endif %}
+
+    {% if listing.specializations.all %}
+      <section class="flex flex-wrap gap-2">
+        {% for spec in listing.specializations.all %}<span class="badge bg-slate-100 text-slate-700">{{ spec.name }}</span>{% endfor %}
+      </section>
+    {% endif %}
+  </article>
+
+  <aside class="space-y-4">
+    {% if can_edit %}
+      <div class="card space-y-3">
+        <p class="text-sm text-slate-600">{% translate "Status" %}: <strong>{{ listing.get_status_display }}</strong></p>
+        <a class="btn-secondary w-full" href="{% url 'listings:update' pk=listing.pk %}">{% translate "Edytuj" %}</a>
+        {% if listing.status != "published" and listing.status != "archived" %}
+          <form method="post" action="{% url 'listings:transition' pk=listing.pk action='publish' %}">{% csrf_token %}
+            <input type="hidden" name="next" value="{{ listing.get_absolute_url }}">
+            <button class="btn-primary w-full">{% translate "Opublikuj" %}</button>
+          </form>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    <div class="card space-y-3">
+      <h2 class="text-lg">{% translate "Kontakt" %}</h2>
+      {% if can_send_inquiry %}
+        <form method="post" action="{% url 'listings:inquiry' pk=listing.pk %}" class="space-y-3">{% csrf_token %}
+          {% include "includes/form_fields.html" with form=inquiry_form %}
+          <button class="btn-primary w-full">{% translate "Wyślij wiadomość" %}</button>
+          <p class="text-xs text-slate-500">{% translate "Autor ogłoszenia otrzyma Twoją wiadomość i adres e-mail, aby móc odpowiedzieć." %}</p>
+        </form>
+      {% elif not user.is_authenticated %}
+        <p class="text-sm text-slate-600">{% translate "Zaloguj się, aby wysłać wiadomość do autora." %}</p>
+        <a class="btn-primary w-full" href="{% url 'account_login' %}?next={{ request.path|urlencode }}">{% translate "Zaloguj się" %}</a>
+      {% elif can_edit %}
+        <p class="text-sm text-slate-600">{% translate "To Twoje ogłoszenie – wiadomości trafią na:" %} {{ listing.contact_email|default:listing.author.email }}</p>
+      {% endif %}
+    </div>
+  </aside>
+</div>
+{% endblock %}

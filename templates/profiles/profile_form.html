@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% if profile %}{% translate "Edycja profilu" %}{% else %}{% translate "Nowy profil specjalisty" %}{% endif %}{% endblock %}
+{% block content %}
+<h1 class="mb-6">{% if profile %}{% translate "Edycja profilu" %}{% else %}{% translate "Nowy profil specjalisty" %}{% endif %}</h1>
+<form method="post" class="card max-w-3xl space-y-4" novalidate>
+  {% csrf_token %}
+  <div class="grid gap-4 sm:grid-cols-2">{% include "includes/form_fields.html" with form=name_form %}</div>
+  {% include "includes/form_fields.html" with form=form %}
+  <button type="submit" class="btn-primary">{% translate "Zapisz profil" %}</button>
+</form>
+{% endblock %}

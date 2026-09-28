@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% load i18n listing_tags %}
+{% block title %}{{ profile.display_name }} – {{ profile.get_profession_display }}, {{ profile.city.name }}{% endblock %}
+{% block meta_description %}{{ profile.headline }}{% endblock %}
+{% block content %}
+<div class="grid gap-8 lg:grid-cols-[1fr_20rem]">
+  <article class="space-y-6">
+    <header class="space-y-2">
+      <h1>{{ profile.display_name }}</h1>
+      <p class="text-slate-600">{{ profile.get_profession_display }} · {{ profile.city.name }}, {{ profile.city.voivodeship.name }}{% if profile.works_online %} · {% translate "pracuje online" %}{% endif %}</p>
+      <p class="text-lg">{{ profile.headline }}</p>
+      {% if profile.open_to_work %}<span class="badge bg-violet-100 text-violet-800">{% translate "Szuka pracy / współpracy" %}</span>{% endif %}
+    </header>
+    {% if profile.bio %}<section class="whitespace-pre-line leading-relaxed">{{ profile.bio }}</section>{% endif %}
+    {% if profile.specializations.all %}
+      <section><h2 class="mb-2">{% translate "Specjalizacje" %}</h2>
+        <div class="flex flex-wrap gap-2">{% for s in profile.specializations.all %}<span class="badge bg-slate-100 text-slate-700">{{ s.name }}</span>{% endfor %}</div>
+      </section>
+    {% endif %}
+    {% if profile.approaches.all %}
+      <section><h2 class="mb-2">{% translate "Nurty terapeutyczne" %}</h2>
+        <div class="flex flex-wrap gap-2">{% for a in profile.approaches.all %}<span class="badge bg-brand-50 text-brand-900">{{ a.name }}</span>{% endfor %}</div>
+      </section>
+    {% endif %}
+    <section><h2 class="mb-2">{% translate "Ogłoszenia" %}</h2>{% personal_listings profile.user %}</section>
+  </article>
+  <aside class="space-y-4">
+    <div class="card space-y-2 text-sm">
+      <h2 class="text-lg">{% translate "Kontakt" %}</h2>
+      {% if profile.contact_email %}<p><a class="link" href="mailto:{{ profile.contact_email }}">{{ profile.contact_email }}</a></p>{% endif %}
+      {% if profile.contact_phone %}<p>{{ profile.contact_phone }}</p>{% endif %}
+      {% if profile.website %}<p><a class="link" href="{{ profile.website }}" rel="nofollow noopener" target="_blank">{{ profile.website }}</a></p>{% endif %}
+      {% if profile.languages %}<p class="text-slate-600">{% translate "Języki" %}: {{ profile.languages }}</p>{% endif %}
+      {% if profile.license_number %}<p class="text-slate-600">{% translate "Nr uprawnień" %}: {{ profile.license_number }}</p>{% endif %}
+      {% if not profile.contact_email and not profile.contact_phone and not profile.website %}<p class="text-slate-500">{% translate "Specjalista nie podał publicznych danych kontaktowych." %}</p>{% endif %}
+    </div>
+    {% if is_owner %}<a class="btn-secondary w-full" href="{% url 'profiles:edit' %}">{% translate "Edytuj profil" %}</a>{% endif %}
+  </aside>
+</div>
+{% endblock %}

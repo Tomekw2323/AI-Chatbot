@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% load i18n listing_tags %}
+{% block title %}{% translate "Mój panel" %}{% endblock %}
+{% block content %}
+<h1 class="mb-6">{% translate "Mój panel" %}</h1>
+<div class="grid gap-6 lg:grid-cols-2">
+  <section class="card space-y-3">
+    <h2>{% translate "Profil specjalisty" %}</h2>
+    {% if profile %}
+      <p><a class="link" href="{{ profile.get_absolute_url }}">{{ profile.display_name }}</a> – {{ profile.get_profession_display }}, {{ profile.city.name }}</p>
+      {% if not profile.is_public %}<p class="text-sm text-amber-700">{% translate "Profil jest ukryty." %}</p>{% endif %}
+      <a class="btn-secondary" href="{% url 'profiles:edit' %}">{% translate "Edytuj profil" %}</a>
+    {% else %}
+      <p class="text-sm text-slate-600">{% translate "Jesteś psychologiem lub psychoterapeutą? Utwórz wizytówkę, aby kliniki mogły Cię znaleźć." %}</p>
+      <a class="btn-primary" href="{% url 'profiles:edit' %}">{% translate "Utwórz profil" %}</a>
+    {% endif %}
+  </section>
+
+  <section class="card space-y-3">
+    <h2>{% translate "Moje organizacje" %}</h2>
+    {% if organizations %}
+      <ul class="space-y-1">
+        {% for org in organizations %}
+          <li class="flex items-center justify-between"><a class="link" href="{{ org.get_absolute_url }}">{{ org.name }}</a>
+            <a class="text-sm text-slate-500 hover:underline" href="{% url 'organizations:update' slug=org.slug %}">{% translate "edytuj" %}</a></li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="text-sm text-slate-600">{% translate "Reprezentujesz poradnię, klinikę lub fundację? Dodaj organizację, aby publikować ogłoszenia w jej imieniu." %}</p>
+    {% endif %}
+    <a class="btn-secondary" href="{% url 'organizations:create' %}">{% translate "Dodaj organizację" %}</a>
+  </section>
+</div>
+
+<section class="mt-8 space-y-3">
+  <div class="flex items-center justify-between">
+    <h2>{% translate "Ogłoszenia" %}</h2>
+    <a class="btn-primary" href="{% url 'listings:create' %}">{% translate "Dodaj ogłoszenie" %}</a>
+  </div>
+  {% if listings %}
+    <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+      <table class="min-w-full divide-y divide-slate-200 text-sm">
+        <thead class="bg-slate-50 text-left text-slate-600">
+          <tr><th class="px-4 py-2">{% translate "Tytuł" %}</th><th class="px-4 py-2">{% translate "Rodzaj" %}</th><th class="px-4 py-2">{% translate "Status" %}</th><th class="px-4 py-2">{% translate "Wygasa" %}</th><th class="px-4 py-2"></th></tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for listing in listings %}
+            <tr>
+              <td class="px-4 py-2"><a class="link" href="{{ listing.get_absolute_url }}">{{ listing.title }}</a>{% if listing.organization %}<div class="text-xs text-slate-500">{{ listing.organization.name }}</div>{% endif %}</td>
+              <td class="px-4 py-2"><span class="badge {% kind_badge_class listing.kind %}">{{ listing.get_kind_display }}</span></td>
+              <td class="px-4 py-2">{{ listing.get_status_display }}{% if listing.is_flagged %} <span class="badge bg-red-100 text-red-800">{% translate "ukryte przez moderację" %}</span>{% endif %}</td>
+              <td class="px-4 py-2">{{ listing.expires_at|date:"j.m.Y"|default:"–" }}</td>
+              <td class="flex flex-wrap justify-end gap-2 px-4 py-2">
+                <a class="btn-secondary" href="{% url 'listings:update' pk=listing.pk %}">{% translate "Edytuj" %}</a>
+                {% if listing.status == "draft" or listing.status == "expired" %}
+                  <form method="post" action="{% url 'listings:transition' pk=listing.pk action='publish' %}">{% csrf_token %}<button class="btn-primary">{% translate "Opublikuj" %}</button></form>
+                {% endif %}
+                {% if listing.status != "archived" %}
+                  <form method="post" action="{% url 'listings:transition' pk=listing.pk action='archive' %}">{% csrf_token %}<button class="btn-danger">{% translate "Archiwizuj" %}</button></form>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="text-sm text-slate-600">{% translate "Nie masz jeszcze żadnych ogłoszeń." %}</p>
+  {% endif %}
+</section>
+{% endblock %}

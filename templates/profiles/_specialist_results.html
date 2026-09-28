@@ -1,0 +1,21 @@
+{% load i18n %}
+<div id="results">
+  {% if page_obj.object_list %}
+    <div class="grid gap-4 sm:grid-cols-2">
+      {% for profile in page_obj %}
+        <article class="card space-y-2">
+          <div class="flex items-center justify-between gap-2">
+            <h3 class="text-lg font-semibold"><a class="hover:text-brand-700" href="{{ profile.get_absolute_url }}">{{ profile.display_name }}</a></h3>
+            {% if profile.open_to_work %}<span class="badge bg-violet-100 text-violet-800">{% translate "Szuka pracy" %}</span>{% endif %}
+          </div>
+          <p class="text-sm text-slate-500">{{ profile.get_profession_display }} · {{ profile.city.name }}{% if profile.works_online %} · {% translate "online" %}{% endif %}</p>
+          <p class="text-sm text-slate-700">{{ profile.headline }}</p>
+          <div class="flex flex-wrap gap-1">{% for spec in profile.specializations.all|slice:":3" %}<span class="badge bg-slate-100 text-slate-700">{{ spec.name }}</span>{% endfor %}</div>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="card text-center text-slate-600">{% translate "Brak profili spełniających kryteria." %}</div>
+  {% endif %}
+  {% include "includes/pagination.html" %}
+</div>

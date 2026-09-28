@@ -1,0 +1,12 @@
+{% load i18n %}
+<div id="results">
+  <p class="mb-4 text-sm text-slate-500">{% blocktranslate count n=page_obj.paginator.count %}{{ n }} ogłoszenie{% plural %}{{ n }} ogłoszeń{% endblocktranslate %}</p>
+  {% if page_obj.object_list %}
+    <div class="grid gap-4 sm:grid-cols-2">
+      {% for listing in page_obj %}{% include "listings/_listing_card.html" %}{% endfor %}
+    </div>
+  {% else %}
+    <div class="card text-center text-slate-600">{% translate "Brak ogłoszeń spełniających kryteria. Zmień filtry lub dodaj własne ogłoszenie." %}</div>
+  {% endif %}
+  {% include "includes/pagination.html" %}
+</div>

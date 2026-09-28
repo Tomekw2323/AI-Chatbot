@@ -1,0 +1,82 @@
+@import "tailwindcss";
+
+@source "../../templates";
+@source "../../apps";
+
+@theme {
+  --color-brand-50: #f0f7f6;
+  --color-brand-100: #d9ece9;
+  --color-brand-500: #2f8f83;
+  --color-brand-600: #26766c;
+  --color-brand-700: #1f5f57;
+  --color-brand-900: #133a35;
+}
+
+/* Base styles for Django-rendered form widgets (including allauth pages),
+   so forms look consistent without per-field classes. */
+@layer base {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="url"],
+  input[type="number"],
+  input[type="search"],
+  input[type="time"],
+  input[type="tel"],
+  select,
+  textarea {
+    @apply block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 shadow-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none;
+  }
+  input[type="checkbox"] {
+    @apply h-4 w-4 rounded border-slate-300 accent-brand-600;
+  }
+  label {
+    @apply text-sm font-medium text-slate-700;
+  }
+  .helptext {
+    @apply mt-1 block text-xs text-slate-500;
+  }
+  .errorlist {
+    @apply mt-1 text-sm text-red-600;
+  }
+  h1 {
+    @apply text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl;
+  }
+  h2 {
+    @apply text-xl font-semibold text-slate-900;
+  }
+}
+
+@layer components {
+  .btn,
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-brand-100;
+  }
+  .btn-primary {
+    @apply bg-brand-600 text-white hover:bg-brand-700;
+  }
+  .btn-secondary {
+    @apply border border-slate-300 bg-white text-slate-700 hover:bg-slate-50;
+  }
+  .btn-danger {
+    @apply border border-red-200 bg-white text-red-700 hover:bg-red-50;
+  }
+  .card {
+    @apply rounded-xl border border-slate-200 bg-white p-5 shadow-sm;
+  }
+  .badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+  .link {
+    @apply font-medium text-brand-700 hover:underline;
+  }
+  .checkbox-grid ul,
+  .checkbox-grid > div {
+    @apply grid grid-cols-1 gap-1 sm:grid-cols-2;
+  }
+  .checkbox-grid label {
+    @apply flex items-center gap-2 font-normal;
+  }
+}

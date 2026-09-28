@@ -1,0 +1,24 @@
+{% load i18n listing_tags %}
+<article class="card flex flex-col gap-2 transition hover:border-brand-500">
+  <div class="flex flex-wrap items-center gap-2 text-xs">
+    <span class="badge {% kind_badge_class listing.kind %}">{{ listing.get_kind_display }}</span>
+    <span class="text-slate-500">{{ listing.city.name }}</span>
+    {% if listing.work_mode == "remote" %}<span class="badge bg-slate-100 text-slate-700">{% translate "Zdalnie" %}</span>{% endif %}
+  </div>
+  <h3 class="text-lg font-semibold leading-snug">
+    <a href="{{ listing.get_absolute_url }}" class="hover:text-brand-700">{{ listing.title }}</a>
+  </h3>
+  <p class="text-sm text-slate-600">
+    {% if listing.organization %}{{ listing.organization.name }}{% endif %}
+  </p>
+  <div class="mt-auto flex items-center justify-between text-sm">
+    <span class="font-medium text-slate-900">
+      {% if listing.is_room_rental and listing.price_amount is not None %}
+        {{ listing.price_amount|floatformat:"-2" }} zł {{ listing.get_price_unit_display }}
+      {% elif listing.salary_min or listing.salary_max %}
+        {% if listing.salary_min %}{{ listing.salary_min }}{% endif %}{% if listing.salary_min and listing.salary_max %}–{% endif %}{% if listing.salary_max %}{{ listing.salary_max }}{% endif %} zł {{ listing.get_salary_period_display }}
+      {% endif %}
+    </span>
+    {% if listing.published_at %}<time class="text-xs text-slate-500" datetime="{{ listing.published_at|date:'c' }}">{{ listing.published_at|date:"j E Y" }}</time>{% endif %}
+  </div>
+</article>

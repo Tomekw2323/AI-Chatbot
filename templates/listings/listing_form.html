@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% load i18n static %}
+{% block title %}{% if listing %}{% translate "Edycja ogłoszenia" %}{% else %}{% translate "Nowe ogłoszenie" %}{% endif %}{% endblock %}
+{% block content %}
+<h1 class="mb-6">{% if listing %}{% translate "Edycja ogłoszenia" %}{% else %}{% translate "Nowe ogłoszenie" %}{% endif %}</h1>
+<form method="post" class="max-w-3xl space-y-6" novalidate>
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{{ form.non_field_errors }}</div>{% endif %}
+
+  <fieldset class="card space-y-4">
+    <legend class="px-1 font-semibold">{% translate "Podstawowe informacje" %}</legend>
+    <div class="space-y-1">{{ form.kind.as_field_group }}</div>
+    {% if form.organization.field.queryset.exists %}<div class="space-y-1" data-kinds="job internship volunteering room_rental">{{ form.organization.as_field_group }}</div>{% endif %}
+    <div class="space-y-1">{{ form.title.as_field_group }}</div>
+    <div class="space-y-1">{{ form.description.as_field_group }}</div>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div class="space-y-1">{{ form.city.as_field_group }}</div>
+      <div class="space-y-1">{{ form.address.as_field_group }}</div>
+    </div>
+    <div class="space-y-1">{{ form.contact_email.as_field_group }}</div>
+    <div class="checkbox-grid space-y-1">{{ form.specializations.as_field_group }}</div>
+  </fieldset>
+
+  <fieldset class="card space-y-4" data-kinds="job internship volunteering job_seeking">
+    <legend class="px-1 font-semibold">{% translate "Warunki współpracy" %}</legend>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div class="space-y-1" data-kinds="job internship job_seeking">{{ form.employment_type.as_field_group }}</div>
+      <div class="space-y-1">{{ form.work_mode.as_field_group }}</div>
+      <div class="space-y-1" data-kinds="job internship">{{ form.salary_min.as_field_group }}</div>
+      <div class="space-y-1" data-kinds="job internship">{{ form.salary_max.as_field_group }}</div>
+      <div class="space-y-1" data-kinds="job internship">{{ form.salary_period.as_field_group }}</div>
+    </div>
+  </fieldset>
+
+  <fieldset class="card space-y-4" data-kinds="room_rental">
+    <legend class="px-1 font-semibold">{% translate "Gabinet" %}</legend>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div class="space-y-1">{{ form.price_amount.as_field_group }}</div>
+      <div class="space-y-1">{{ form.price_unit.as_field_group }}</div>
+      <div class="space-y-1">{{ form.room_area_m2.as_field_group }}</div>
+      <div class="space-y-1">{{ form.amenities.as_field_group }}</div>
+    </div>
+    <div class="space-y-1">{{ form.availability_description.as_field_group }}</div>
+
+    <div class="space-y-2">
+      <h3 class="text-sm font-semibold">{% translate "Stałe bloki dostępności (opcjonalnie)" %}</h3>
+      {{ formset.management_form }}
+      {% if formset.non_form_errors %}<div class="text-sm text-red-600">{{ formset.non_form_errors }}</div>{% endif %}
+      {% for f in formset %}
+        <div class="grid grid-cols-2 items-end gap-3 sm:grid-cols-4">
+          {% for hidden in f.hidden_fields %}{{ hidden }}{% endfor %}
+          <div class="space-y-1">{{ f.weekday.as_field_group }}</div>
+          <div class="space-y-1">{{ f.start_time.as_field_group }}</div>
+          <div class="space-y-1">{{ f.end_time.as_field_group }}</div>
+          {% if f.instance.pk %}<div class="flex items-center gap-2 pb-2">{{ f.DELETE }} <label for="{{ f.DELETE.id_for_label }}">{% translate "Usuń" %}</label></div>{% endif %}
+          {% if f.non_field_errors %}<div class="col-span-full text-sm text-red-600">{{ f.non_field_errors }}</div>{% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  </fieldset>
+
+  <div class="flex flex-wrap gap-3">
+    <button type="submit" name="action" value="save" class="btn-secondary">{% translate "Zapisz" %}</button>
+    {% if not listing or listing.status == "draft" or listing.status == "expired" %}
+      <button type="submit" name="action" value="publish" class="btn-primary">{% translate "Zapisz i opublikuj" %}</button>
+    {% endif %}
+  </div>
+</form>
+{% endblock %}
+{% block extra_body %}<script src="{% static 'js/listing-form.js' %}" defer></script>{% endblock %}

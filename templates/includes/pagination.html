@@ -1,0 +1,12 @@
+{% load i18n listing_tags %}
+{% if page_obj.has_other_pages %}
+<nav class="mt-6 flex items-center justify-between text-sm" aria-label="{% translate 'Paginacja' %}">
+  {% if page_obj.has_previous %}
+    <a class="btn-secondary" href="?{% query_transform page=page_obj.previous_page_number %}">{% translate "Poprzednia" %}</a>
+  {% else %}<span></span>{% endif %}
+  <span class="text-slate-500">{% blocktranslate with n=page_obj.number total=page_obj.paginator.num_pages %}Strona {{ n }} z {{ total }}{% endblocktranslate %}</span>
+  {% if page_obj.has_next %}
+    <a class="btn-secondary" href="?{% query_transform page=page_obj.next_page_number %}">{% translate "Następna" %}</a>
+  {% else %}<span></span>{% endif %}
+</nav>
+{% endif %}

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% load i18n listing_tags %}
+{% block title %}{{ organization.name }} – {{ organization.city.name }}{% endblock %}
+{% block meta_description %}{{ organization.get_kind_display }}, {{ organization.city.name }}. {{ organization.description|truncatechars:140 }}{% endblock %}
+{% block content %}
+<div class="grid gap-8 lg:grid-cols-[1fr_20rem]">
+  <article class="space-y-6">
+    <header class="space-y-2">
+      <h1>{{ organization.name }}</h1>
+      <p class="text-slate-600">{{ organization.get_kind_display }} · {{ organization.city.name }}, {{ organization.city.voivodeship.name }}
+        {% if organization.is_verified %}<span class="badge ml-2 bg-emerald-100 text-emerald-800">{% translate "Zweryfikowana" %}</span>{% endif %}</p>
+    </header>
+    {% if organization.description %}<section class="whitespace-pre-line leading-relaxed">{{ organization.description }}</section>{% endif %}
+    <section><h2 class="mb-2">{% translate "Aktualne ogłoszenia" %}</h2>{% organization_listings organization %}</section>
+  </article>
+  <aside class="space-y-4">
+    <div class="card space-y-2 text-sm">
+      <h2 class="text-lg">{% translate "Kontakt" %}</h2>
+      {% if organization.address %}<p>{{ organization.address }}</p>{% endif %}
+      {% if organization.contact_email %}<p><a class="link" href="mailto:{{ organization.contact_email }}">{{ organization.contact_email }}</a></p>{% endif %}
+      {% if organization.contact_phone %}<p>{{ organization.contact_phone }}</p>{% endif %}
+      {% if organization.website %}<p><a class="link" href="{{ organization.website }}" rel="nofollow noopener" target="_blank">{{ organization.website }}</a></p>{% endif %}
+    </div>
+    {% if can_manage %}
+      <a class="btn-secondary w-full" href="{% url 'organizations:update' slug=organization.slug %}">{% translate "Edytuj organizację" %}</a>
+      <a class="btn-primary w-full" href="{% url 'listings:create' %}">{% translate "Dodaj ogłoszenie" %}</a>
+    {% endif %}
+  </aside>
+</div>
+{% endblock %}

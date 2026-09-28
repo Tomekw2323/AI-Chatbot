@@ -1,0 +1,6 @@
+{# Renders every visible field of ``form`` using Django's field-group template. #}
+{% if form.non_field_errors %}<div class="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{{ form.non_field_errors }}</div>{% endif %}
+{% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+{% for field in form.visible_fields %}
+  <div class="space-y-1 {% if field.widget_type == 'checkboxselectmultiple' %}checkbox-grid{% endif %}">{{ field.as_field_group }}</div>
+{% endfor %}
