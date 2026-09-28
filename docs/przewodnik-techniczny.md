@@ -22,6 +22,171 @@ Krótszy opis dla właściciela: [jak-dziala.md](jak-dziala.md).
 
 Decyzje: [docs/adr/README.md](adr/README.md). Stos: ADR 0003, 0004, 0010.
 
+## Drzewo projektu
+
+Katalogi na gałęzi `main`. Migracje, cache i pliki generowane są pominięte. Krótki komentarz jest tylko przy nazwie, która nie jest oczywista.
+
+```text
+.
+├── manage.py
+├── pyproject.toml
+├── uv.lock
+├── Dockerfile
+├── docker-compose.yml
+├── render.yaml                        # pełna wersja: web, cron, Postgres
+├── render.demo.yaml                   # darmowe demo na SQLite
+├── .env.example
+├── .pre-commit-config.yaml
+├── .cursor/rules/
+├── .github/workflows/ci.yml
+├── AGENTS.md
+├── CONTRIBUTING.md
+├── README.md
+├── apps/
+│   ├── accounts/
+│   │   ├── models.py
+│   │   ├── services.py
+│   │   ├── forms.py
+│   │   └── admin.py
+│   ├── core/
+│   │   ├── models.py
+│   │   ├── middleware.py
+│   │   ├── ratelimit.py
+│   │   ├── captcha.py
+│   │   ├── text.py                    # slugi, w tym „ł”
+│   │   ├── context_processors.py
+│   │   ├── admin.py
+│   │   └── fixtures/
+│   │       └── reference_data.json    # słownik: województwa, miasta, specjalizacje, nurty
+│   ├── listings/
+│   │   ├── models.py
+│   │   ├── services.py
+│   │   ├── views.py
+│   │   ├── urls.py
+│   │   ├── forms.py
+│   │   ├── filters.py
+│   │   ├── permissions.py
+│   │   ├── admin.py
+│   │   ├── templatetags/
+│   │   │   └── listing_tags.py        # ogłoszenia na stronie organizacji
+│   │   └── management/commands/
+│   │       ├── daily_maintenance.py
+│   │       ├── expire_listings.py
+│   │       ├── prepare_demo.py
+│   │       └── seed_demo.py
+│   ├── organizations/
+│   │   ├── models.py
+│   │   ├── services.py
+│   │   ├── views.py
+│   │   ├── urls.py
+│   │   ├── forms.py
+│   │   └── admin.py
+│   ├── privacy/
+│   │   ├── services.py
+│   │   ├── views.py
+│   │   └── urls.py
+│   └── profiles/
+│       ├── models.py
+│       ├── views.py
+│       ├── urls.py
+│       ├── forms.py
+│       ├── filters.py
+│       └── admin.py
+├── config/
+│   ├── urls.py
+│   ├── wsgi.py
+│   ├── asgi.py
+│   ├── sitemaps.py
+│   └── settings/
+│       ├── base.py
+│       ├── dev.py
+│       ├── test.py
+│       ├── prod.py
+│       └── demo.py
+├── templates/
+│   ├── base.html
+│   ├── home.html
+│   ├── 403.html
+│   ├── 404.html
+│   ├── 429.html
+│   ├── robots.txt
+│   ├── includes/
+│   │   ├── form_fields.html
+│   │   └── pagination.html
+│   ├── allauth/
+│   │   ├── elements/
+│   │   │   └── button.html
+│   │   └── layouts/
+│   │       └── base.html
+│   ├── listings/
+│   │   ├── listing_list.html
+│   │   ├── listing_detail.html
+│   │   ├── listing_form.html
+│   │   ├── dashboard.html
+│   │   ├── _listing_card.html
+│   │   ├── _listing_results.html
+│   │   ├── _listing_compact_list.html
+│   │   ├── _delete_listing.html
+│   │   └── email/
+│   │       └── inquiry.txt
+│   ├── profiles/
+│   │   ├── specialist_list.html
+│   │   ├── specialist_detail.html
+│   │   ├── profile_form.html
+│   │   └── _specialist_results.html
+│   ├── organizations/
+│   │   ├── organization_detail.html
+│   │   └── organization_form.html
+│   └── privacy/
+│       ├── my_data.html
+│       ├── privacy_policy.html
+│       └── terms.html
+├── static/
+│   ├── js/
+│   │   └── listing-form.js
+│   └── vendor/
+│       └── htmx-2.0.11.min.js
+├── assets/
+│   └── css/
+│       └── source.css                 # źródło klas Tailwinda
+├── scripts/
+│   └── run_demo.sh
+└── docs/
+    ├── przewodnik-techniczny.md
+    ├── jak-dziala.md
+    ├── architecture.md
+    ├── domain-model.md
+    ├── security.md
+    ├── deployment.md
+    ├── roadmap.md
+    ├── preview/
+    └── adr/
+```
+
+`/konto/` obsługuje allauth, więc w `accounts` są `models.py`, `services.py` i `forms.py`. `services.py` jest też w `listings`, `organizations` i `privacy`. Widok w `profiles` woła `SpecialistProfile`. Szablony są w `templates/` (`DIRS` w `config/settings/base.py`). Testy są w `apps/<aplikacja>/tests/`.
+
+Poniżej ścieżka żądania i warstwy importu. Kolejność middleware i mapa URL są w następnej sekcji. Reguły wołań są w „Aplikacje i kierunek importów”.
+
+```text
+przeglądarka
+└── middleware
+    └── config/urls.py
+        └── views
+            └── services
+                └── models
+
+apps.privacy
+└── apps.listings
+    ├── apps.profiles
+    │   └── apps.accounts
+    │       └── apps.core
+    └── apps.organizations
+        └── apps.accounts
+            └── apps.core
+```
+
+Pierwsze drzewo to kolejność obsługi żądania: przeglądarka, middleware, `config/urls.py`, widok, `services.py`, model. Drugie jest z kontraktu import-linter (`pyproject.toml`, `[tool.importlinter]`): warstwa wyżej może importować każdą niższą. `profiles` i `organizations` są rodzeństwem. `config` może importować każdą aplikację.
+
 ## Przepływ żądania
 
 1. Przeglądarka woła HTTPS. Na Render proxy dokleja `X-Forwarded-Proto` i adres klienta do `X-Forwarded-For`. `TRUSTED_PROXY_COUNT` mówi, ile ostatnich wpisów `X-Forwarded-For` ufać (`apps/core/ratelimit.py`, `client_ip`). Lokalnie `0` — liczy się `REMOTE_ADDR`.
