@@ -1,0 +1,127 @@
+[project]
+name = "bartoszup"
+version = "0.1.0"
+description = "Platforma dla branży zdrowia psychicznego: oferty pracy, staże, wynajem gabinetów i wizytówki specjalistów."
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "django>=5.2,<5.3",
+    "django-allauth[socialaccount]>=65.19.4",
+    "django-environ>=0.14.0",
+    "django-filter>=26.1",
+    "django-htmx>=1.29.0",
+    "django-stubs-ext>=6.1.1",
+    "django-tailwind-cli>=4.8.1",
+    "gunicorn>=26.2.0",
+    "psycopg[binary]>=3.3.6",
+    "whitenoise>=6.12.0",
+]
+
+[dependency-groups]
+dev = [
+    "django-stubs>=6.1.1",
+    "factory-boy>=3.3.3",
+    "import-linter>=2.15",
+    "mypy>=2.3.1",
+    "pre-commit>=4.6.2",
+    "pytest>=9.1.1",
+    "pytest-cov>=7.1.0",
+    "pytest-django>=4.14.0",
+    "ruff>=0.16.9",
+]
+
+# ---------------------------------------------------------------------------
+# Ruff (lint + format)
+# ---------------------------------------------------------------------------
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+extend-exclude = ["**/migrations/**"]
+
+[tool.ruff.lint]
+select = [
+    "E", "W", "F",   # pycodestyle, pyflakes
+    "I",             # isort
+    "B",             # bugbear
+    "UP",            # pyupgrade
+    "DJ",            # django
+    "S",             # bandit (security)
+    "SIM",           # simplify
+    "C4",            # comprehensions
+    "RUF",           # ruff-specific
+]
+ignore = [
+    "RUF012",                      # Django Meta/admin class attributes are idiomatically mutable
+    "RUF001", "RUF002", "RUF003",  # Polish typography uses en dashes, quotes etc. on purpose
+]
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**" = ["S101", "S105", "S106"]
+"config/settings/*" = ["F405"]
+
+# ---------------------------------------------------------------------------
+# Mypy
+# ---------------------------------------------------------------------------
+[tool.mypy]
+python_version = "3.13"
+plugins = ["mypy_django_plugin.main"]
+exclude = ["migrations/"]
+strict_optional = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_return_any = true
+no_implicit_reexport = true
+check_untyped_defs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+
+[[tool.mypy.overrides]]
+module = ["*.tests.*", "*.migrations.*"]
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+
+[[tool.mypy.overrides]]
+module = ["factory", "factory.*"]
+implicit_reexport = true
+
+[[tool.mypy.overrides]]
+module = ["environ.*", "django_filters.*", "allauth.*", "django_tailwind_cli.*"]
+ignore_missing_imports = true
+
+[tool.django-stubs]
+django_settings_module = "config.settings.test"
+
+# ---------------------------------------------------------------------------
+# Pytest
+# ---------------------------------------------------------------------------
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.test"
+python_files = ["test_*.py"]
+addopts = "--strict-markers --reuse-db"
+testpaths = ["apps"]
+filterwarnings = [
+    # STATIC_ROOT only exists after collectstatic (Docker/prod), not in tests.
+    "ignore:No directory at:UserWarning",
+    # Django 6.0 URLField scheme change, triggered inside django-allauth.
+    "ignore:The default scheme will be changed:django.utils.deprecation.RemovedInDjango60Warning",
+]
+
+[tool.coverage.run]
+source = ["apps"]
+omit = ["*/migrations/*", "*/tests/*"]
+
+# ---------------------------------------------------------------------------
+# Import Linter: enforces module boundaries of the modular monolith.
+# ---------------------------------------------------------------------------
+[tool.importlinter]
+root_packages = ["apps"]
+
+[[tool.importlinter.contracts]]
+name = "Module layers (higher may import lower, never the reverse)"
+type = "layers"
+layers = [
+    "apps.listings",
+    "apps.profiles | apps.organizations",
+    "apps.accounts",
+    "apps.core",
+]

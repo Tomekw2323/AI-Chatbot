@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Django
+.env
+staticfiles/
+media/
+*.sqlite3
+
+# Tailwind (binary is downloaded, CSS is built)
+.django_tailwind_cli/
+static/css/tailwind.css
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
