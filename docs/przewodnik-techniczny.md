@@ -24,6 +24,10 @@ Decyzje: [docs/adr/README.md](adr/README.md). Stos: ADR 0003, 0004, 0010.
 
 ## Drzewo projektu
 
+![Diagram komponentów BartoszUP](diagram-architektury.png)
+
+Diagram komponentów; drzewo tekstowe poniżej to ten sam system jako katalogi.
+
 Katalogi na gałęzi `main`. Migracje, cache i pliki generowane są pominięte. Krótki komentarz jest tylko przy nazwie, która nie jest oczywista.
 
 ```text
