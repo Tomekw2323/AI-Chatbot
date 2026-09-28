@@ -1,0 +1,71 @@
+# Render Blueprint (https://render.com/docs/blueprint-spec), EU region (Frankfurt).
+# NOT deployed yet. See docs/deployment.md before the first deploy.
+services:
+  - type: web
+    name: bartoszup
+    runtime: docker
+    region: frankfurt
+    plan: starter
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /healthz/
+    preDeployCommand: python manage.py migrate --noinput
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings.prod
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: bartoszup-db
+          property: connectionString
+      - key: DJANGO_ALLOWED_HOSTS
+        value: bartoszup.onrender.com
+      - key: DJANGO_CSRF_TRUSTED_ORIGINS
+        value: https://bartoszup.onrender.com
+      - key: SITE_URL
+        value: https://bartoszup.onrender.com
+      - key: ACCOUNT_EMAIL_VERIFICATION
+        value: mandatory
+      - key: WEB_CONCURRENCY
+        value: "2"
+      # Set in the Render dashboard (secrets are never committed):
+      - key: EMAIL_URL
+        sync: false
+      - key: DEFAULT_FROM_EMAIL
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: DJANGO_ADMIN_EMAILS
+        sync: false
+
+  - type: cron
+    name: bartoszup-expire-listings
+    runtime: docker
+    region: frankfurt
+    plan: starter
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    schedule: "15 3 * * *"
+    dockerCommand: python manage.py expire_listings
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings.prod
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: bartoszup-db
+          property: connectionString
+      - key: DJANGO_ALLOWED_HOSTS
+        value: localhost
+
+databases:
+  - name: bartoszup-db
+    region: frankfurt
+    plan: basic-256mb
+    databaseName: bartoszup
+    postgresMajorVersion: "17"
+    ipAllowList: []

@@ -1,0 +1,53 @@
+# Local development stack: app + PostgreSQL + Mailpit (catches outgoing email).
+#   docker compose up --build
+#   App:     http://localhost:8000
+#   Mailpit: http://localhost:8025
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: bartoszup
+      POSTGRES_USER: bartoszup
+      POSTGRES_PASSWORD: bartoszup
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bartoszup -d bartoszup"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "8025:8025"
+
+  web:
+    build:
+      context: .
+      target: dev
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.dev
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-dev-only-insecure-secret-key}
+      DATABASE_URL: postgres://bartoszup:bartoszup@db:5432/bartoszup
+      EMAIL_URL: smtp://mailpit:1025
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py loaddata reference_data &&
+             python manage.py tailwind runserver 0.0.0.0:8000"
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - /app/.venv
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
