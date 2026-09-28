@@ -1,0 +1,316 @@
+# Jak działa BartoszUP
+
+Opis dla właściciela i partnera. Chodzi o to, co da się zrobić na stronie, stan kodu na gałęzi `main` (`71a09807`).
+
+BartoszUP to polska strona dla branży zdrowia psychicznego. Są na niej ogłoszenia (praca, staż, wolontariat, „szukam pracy”, wynajem gabinetu) oraz wizytówki specjalistów i organizacji.
+
+Rezerwacji wizyt u specjalisty nie ma. Płatności nie ma. Zdjęć (logo, zdjęcie profilowe, zdjęcia gabinetu) nie ma. Kalendarza, w którym ktoś rezerwuje konkretną godzinę, nie ma — przy gabinecie widać tylko opis i ewentualnie stałe dni tygodnia.
+
+Są dwie różne rzeczy:
+
+| | Demo, które da się otworzyć | Pełna wersja |
+| --- | --- | --- |
+| Adres | https://bartoszup-demo.onrender.com | W pliku `render.yaml` jest przygotowany https://bartoszup.onrender.com. Ta wersja nie jest wdrożona. |
+| Pasek na górze | Żółty: „To jest demo. Dane są wymyślone i nie jest to prawdziwa usługa.” | Tego paska nie ma. |
+| Dane | Wymyślone przykłady. Po uśpieniu albo nowym wdrożeniu znikają i wgrywają się od nowa. | Prawdziwe konta i ogłoszenia, trzymane w bazie PostgreSQL. |
+| Poczta | Nie wychodzi do skrzynki. | Ma wychodzić prawdziwym mailem (trzeba podać serwer poczty przy wdrożeniu). |
+| Płatności i wizyty pacjentów | Nie ma | Też nie ma. To późniejsze fazy, nie ten kod. |
+
+## Co jest w menu
+
+Na każdej stronie, od lewej:
+
+- **BartoszUP** — strona główna.
+- **Ogłoszenia** — lista wszystkich aktualnych ogłoszeń.
+- **Gabinety** — ta sama lista, od razu ustawiona na wynajem gabinetu.
+- **Specjaliści** — wizytówki.
+- Gość widzi **Zaloguj się** i **Załóż konto**.
+- Zalogowana osoba widzi **Mój panel**, **Dodaj ogłoszenie** i **Wyloguj**.
+
+Na dole: **Regulamin**, **Polityka prywatności**, a po zalogowaniu także **Moje dane**.
+
+Wylogowanie działa przyciskiem (to wysłanie formularza). Samo wejście w adres wylogowania nic nie robi.
+
+## Strona główna
+
+Wyszukiwarka na górze: wpisujesz frazę, wybierasz rodzaj ogłoszenia i miasto, klikasz **Szukaj**. Trafiasz na listę ogłoszeń z tymi filtrami.
+
+Pod spodem pięć kafelków z liczbą aktualnych ogłoszeń. Kliknięcie kafla otwiera listę tylko tego rodzaju:
+
+- Oferta pracy
+- Staż / praktyki
+- Wolontariat
+- Szukam pracy / stażu
+- Wynajem gabinetu
+
+Dalej jest do sześciu najnowszych ogłoszeń i odnośniki do wyróżnionych miast (między innymi Warszawa, Kraków, Wrocław, Gdańsk, Poznań — łącznie 14 miast). Kliknięcie miasta pokazuje ogłoszenia z tego miasta.
+
+Dwa kafelki na dole prowadzą do utworzenia profilu i do dodania ogłoszenia. Bez konta z potwierdzonym e-mailem te strony zatrzymają się na logowaniu albo na prośbie o potwierdzenie adresu.
+
+## Gość (osoba bez konta)
+
+Gość może:
+
+- czytać stronę główną, listę ogłoszeń, pojedyncze ogłoszenie, listę specjalistów, wizytówkę i stronę organizacji;
+- używać filtrów;
+- otworzyć regulamin i politykę prywatności;
+- założyć konto albo się zalogować.
+
+Gość nie widzi szkiców, ogłoszeń po terminie, ogłoszeń ukrytych przez moderację ani stron zablokowanych organizacji i profili. Wejście w takie ogłoszenie kończy się stroną „nie znaleziono”.
+
+### Kontakt bez konta
+
+Na pełnej wersji, gdy są włączone klucze Cloudflare Turnstile, gość na ogłoszeniu widzi formularz: imię i nazwisko, e-mail, treść, kratkę „nie jestem robotem” i przycisk **Wyślij wiadomość**. Wiadomość idzie mailem do autora. Autor dostaje też adres nadawcy, żeby móc odpisać. Adres autora nie wraca do gościa w treści strony.
+
+Na demo kluczy Turnstile nie ma. Gość widzi tekst „Zaloguj się, aby wysłać wiadomość do autora” i przycisk **Zaloguj się**.
+
+Gość nie może dodać ogłoszenia, profilu ani organizacji i nie może zgłosić ogłoszenia.
+
+## Konto
+
+**Załóż konto** (`/konto/signup/`) pyta o:
+
+- adres e-mail (to jest login; nazwy użytkownika nie ma),
+- hasło i powtórzenie hasła (co najmniej 10 znaków; hasło nie może być zbyt proste ani samym ciągiem cyfr),
+- imię i nazwisko,
+- zaznaczenie „Akceptuję regulamin i zapoznałem(-am) się z polityką prywatności”.
+
+Bez zaznaczenia zgody konto nie powstanie. Data zgody zostaje zapisana.
+
+**Zaloguj się** (`/konto/login/`) — e-mail i hasło. Po udanym logowaniu otwiera się **Mój panel**.
+
+Jest też odzyskanie hasła i zmiana hasła oraz strona adresów e-mail (`/konto/email/`, link ze strony **Moje dane**).
+
+Logowanie Google jest w kodzie. Pojawia się dopiero wtedy, gdy przy wdrożeniu ktoś wpisze klucze Google. Na demo ich nie ma, więc przycisku Google nie widać.
+
+Za dużo prób (rejestracja, złe hasło, reset hasła) kończy się odmową na jakiś czas. Przy zbyt wielu operacjach na stronie widać „Zbyt wiele prób”.
+
+### Potwierdzenie e-maila
+
+Na pełnej wersji potwierdzenie jest obowiązkowe już przy rejestracji: przychodzi mail, klikasz link, dopiero wtedy wchodzisz dalej. Bez tego nie opublikujesz ogłoszenia, nie utworzysz profilu ani organizacji i nie wyślesz wiadomości.
+
+Na demo mail nie dochodzi do skrzynki (trafia tylko do dziennika serwera). Możesz założyć konto i zostać zalogowany, ale dodanie ogłoszenia, profilu, organizacji albo zgłoszenia zatrzymuje się na stronie z prośbą o potwierdzenie adresu — a linka w skrzynce nie będzie. Wiadomość do autora pokazuje po polsku: „Potwierdź adres e-mail, aby wysyłać wiadomości.”
+
+Żeby na demo przejść te kroki, zaloguj się gotowym kontem z listy niżej. Te trzy adresy są już potwierdzone.
+
+## Mój panel
+
+Po zalogowaniu **Mój panel** (`/panel/`) pokazuje trzy rzeczy:
+
+1. **Profil specjalisty** — jeśli go nie ma, przycisk **Utwórz profil**. Jeśli jest, widać imię, zawód i miasto, a gdy profil jest ukryty, dopisek „Profil jest ukryty”. **Edytuj profil** otwiera formularz.
+2. **Moje organizacje** — tylko te, w których jesteś właścicielem albo administratorem. Przy każdej jest **edytuj**. Na dole **Dodaj organizację**. Zwykły członek zespołu tej listy nie widzi.
+3. **Ogłoszenia** — twoje oraz ogłoszenia organizacji, którymi zarządzasz. W tabeli: tytuł, rodzaj, status, data wygaśnięcia i przyciski **Edytuj**, **Opublikuj** (przy szkicu i wygasłym), **Archiwizuj** (dopóki nie jest w archiwum) i **Usuń**.
+
+Pod spodem jest link **Moje dane i usuwanie konta (RODO)**.
+
+## Profil specjalisty
+
+Jeden profil na konto. Ścieżka: **Mój panel** → **Utwórz profil** albo **Edytuj profil** (`/specjalisci/moj-profil/`). Trzeba mieć potwierdzony e-mail.
+
+W formularzu:
+
+- imię i nazwisko (z konta),
+- tytuł (na przykład mgr, dr),
+- zawód: psycholog, psychoterapeuta, psychoterapeuta w trakcie szkolenia, psychiatra, seksuolog, coach / trener, student(ka) psychologii, inny,
+- nagłówek (jedno zdanie, widać je na liście),
+- „o mnie”,
+- miasto,
+- „pracuję online”,
+- specjalizacje (kratki, na przykład psychologia dzieci i młodzieży, uzależnienia, interwencja kryzysowa — jest ich 23),
+- nurty (na przykład CBT, psychodynamiczny, Gestalt, EMDR — jest ich 16),
+- języki, numer uprawnień lub certyfikatu,
+- publiczny e-mail, telefon, strona www,
+- „szukam pracy / współpracy”,
+- „profil widoczny publicznie”.
+
+**Zapisz** wraca do panelu i pokazuje „Profil został zapisany.”
+
+Publiczna wizytówka (`/specjalisci/…`) pokazuje te dane, odznakę „Szuka pracy / współpracy”, jeśli jest zaznaczona, oraz ogłoszenia tej osoby dodane prywatnie (bez organizacji). Kontakt to mailto, telefon i link — osobnego formularza na wizytówce nie ma. Właściciel widzi **Edytuj profil**.
+
+Odznaczenie „profil widoczny publicznie” chowa wizytówkę przed innymi (wejście w adres daje „nie znaleziono”). W panelu profil zostaje i da się go z powrotem włączyć.
+
+Pole „widoczny dla pacjentów” jest w bazie i domyślnie wyłączone. Żaden formularz go nie pokazuje i żadna strona dla pacjentów go nie używa.
+
+### Lista specjalistów
+
+**Specjaliści** (`/specjalisci/`). Filtry po lewej: szukaj (nagłówek, opis, imię, nazwisko), miasto, zawód, specjalizacja, nurt, „szuka pracy”. Przycisk **Filtruj**. Zmiana filtra odświeża listę od razu, gdy przeglądarka ma włączony JavaScript; bez JavaScriptu wystarczy **Filtruj**. Na stronie jest 20 osób.
+
+Na liście nie ma profili ukrytych, zablokowanych przez moderację ani profili osób z wyłączonym kontem.
+
+## Organizacje
+
+Organizacji nie ma na osobnej liście w menu. Stronę organizacji otwierasz z ogłoszenia (nazwa pod tytułem) albo z panelu, jeśli nią zarządzasz.
+
+**Dodaj organizację** (z panelu, potwierdzony e-mail, najwyżej 5 organizacji dziennie na konto). Formularz:
+
+- nazwa, rodzaj (poradnia / klinika, gabinet prywatny, fundacja / stowarzyszenie, instytucja publiczna, wynajmujący gabinety, inna),
+- miasto, adres, opis,
+- strona, e-mail, telefon, NIP,
+- „widoczna publicznie”.
+
+Po zapisie jesteś **właścicielem**. Strona organizacji pokazuje opis, odznakę **Zweryfikowana** tylko gdy moderator ją nada, aktualne ogłoszenia tej organizacji oraz kontakt (adres, mailto, telefon, www). Właściciel i administrator widzą **Edytuj organizację** i **Dodaj ogłoszenie**.
+
+### Role
+
+| Rola | Co może |
+| --- | --- |
+| Właściciel | Edytować organizację i jej ogłoszenia, dodawać ogłoszenia w jej imieniu. |
+| Administrator | To samo. |
+| Członek zespołu | Nic z tego na stronie. Nie widzi organizacji w panelu i nie może publikować w jej imieniu. |
+
+Na stronie nie ma zaproszeń ani zmiany ról. Dopisanie drugiej osoby robi moderator w ukrytym panelu administracyjnym. W demo gotowe role są tylko w przykładowych danych.
+
+Odznaczenie „widoczna publicznie” chowa stronę organizacji. Sam znacznik „zweryfikowana” i „zablokowana” ustawia tylko moderator — w formularzu ich nie ma.
+
+Zablokowana organizacja znika z sieci razem ze swoimi ogłoszeniami. Osoby, które nią zarządzają, nadal widzą ją w panelu.
+
+## Ogłoszenia
+
+Pięć rodzajów, jedna lista.
+
+| Rodzaj | Adres listy | Kto to zwykle dodaje | Co jest w formularzu poza tytułem, opisem, miastem i kategoriami |
+| --- | --- | --- | --- |
+| Oferta pracy | `/ogloszenia/praca/` | Osoba albo organizacja | Forma zatrudnienia, tryb pracy, widełki w PLN, okres (za godzinę / za sesję / miesięcznie) |
+| Staż / praktyki | `/ogloszenia/staze/` | Osoba albo organizacja | Jak przy pracy |
+| Wolontariat | `/ogloszenia/wolontariat/` | Osoba albo organizacja | Tryb pracy |
+| Szukam pracy / stażu | `/ogloszenia/szukam-pracy/` | Tylko jako osoba prywatna | Forma zatrudnienia i tryb pracy. Organizacji wybrać się nie da. |
+| Wynajem gabinetu | `/ogloszenia/gabinety/` | Osoba albo organizacja | Cena w PLN (obowiązkowa), jednostka: za godzinę, za dzień albo za miesiąc (obowiązkowa), metraż, wyposażenie, opis dostępności, do 21 stałych bloków „dzień tygodnia + od–do” |
+
+Wspólne pola: tytuł, opis, miasto, adres lub dzielnica, kategorie (te same specjalizacje co przy profilu), e-mail do kontaktu. Pusty e-mail oznacza, że wiadomości idą na adres autora.
+
+Forma zatrudnienia: umowa o pracę, B2B, umowa zlecenie / o dzieło, bezpłatne, inna. Tryb: stacjonarnie, hybrydowo, zdalnie.
+
+### Dodawanie
+
+**Dodaj ogłoszenie** wymaga konta z potwierdzonym e-mailem. Limit: 10 nowych ogłoszeń na godzinę i 50 na dobę.
+
+1. Wybierasz rodzaj. Pola niepasujące do rodzaju chowają się (przy włączonym JavaScript) i przy zapisie są czyszczone.
+2. Jeśli zarządzasz organizacją, pojawia się lista „w imieniu organizacji”. Pusto znaczy ogłoszenie prywatne. Na liście są tylko organizacje, w których jesteś właścicielem albo administratorem.
+3. **Zapisz** zostawia szkic (albo, przy edycji już opublikowanego, zostawia je opublikowane i nie przedłuża terminu).
+4. **Zapisz i opublikuj** jest przy nowym ogłoszeniu, szkicu i wygasłym. Ogłoszenie od razu widać na liście. Termin: 60 dni od tej chwili.
+
+Komunikat: „Ogłoszenie zostało opublikowane.” albo „Ogłoszenie zostało zapisane.”
+
+### Co widać na liście i na stronie ogłoszenia
+
+Karta: rodzaj, miasto, „Zdalnie” gdy tak ustawiono, tytuł, nazwa organizacji, cena albo widełki, data publikacji.
+
+Strona ogłoszenia: rodzaj, miasto i województwo, tytuł, link do organizacji albo do wizytówki autora (gdy ogłoszenie jest prywatne i autor ma publiczny profil), dane zależne od rodzaju, opis, kategorie, „ważne do”.
+
+Przy gabinecie: cena, metraż, adres, wyposażenie, lista bloków (na przykład „Wtorek 16:00–21:00”) i opis dostępności. To jest informacja, nie rezerwacja. Nikt nie klika godziny i nie płaci.
+
+### Statusy
+
+| Status | Kto widzi | Co da się kliknąć |
+| --- | --- | --- |
+| Szkic | Autor oraz właściciel/administrator organizacji | **Opublikuj** albo **Archiwizuj** |
+| Opublikowane | Wszyscy, dopóki nie minął termin i moderacja go nie ukryła | **Archiwizuj**. Edycja nie zdejmuje go z listy. |
+| Wygasłe | Jak szkic (publicznie znika, gdy minie data, nawet zanim status zdąży się zmienić) | **Opublikuj** — liczy nowe 60 dni |
+| Zarchiwizowane | Jak szkic | Nie da się przywrócić. Zostaje **Usuń**. |
+
+**Usuń** jest schowane pod napisem **Usuń**. Drugi przycisk to **Potwierdzam usunięcie**. Ogłoszenie znika na stałe. Do usunięcia wystarczy zalogowanie i prawo do tego ogłoszenia (autor albo właściciel/administrator organizacji).
+
+Prawo do edycji ma autor oraz właściciel i administrator organizacji, w której imieniu ogłoszenie wisi. Zwykły członek zespołu i obca osoba dostają odmowę.
+
+## Filtry ogłoszeń
+
+Na `/ogloszenia/` po lewej:
+
+- Szukaj — szuka w tytule i opisie (przykład z podpowiedzi: „psycholog dziecięcy, gabinet”),
+- Rodzaj,
+- Miasto (albo „Cała Polska”),
+- Województwo (16 województw, 54 miasta w słowniku),
+- Kategoria,
+- Tryb pracy,
+- Sortowanie: najnowsze, cena rosnąco, cena malejąco.
+
+**Filtruj** działa też bez JavaScriptu. Z JavaScriptem lista podmienia się przy zmianie pola. Strona mieści 20 ogłoszeń, na dole jest paginacja.
+
+Te same listy mają krótkie adresy, na przykład `/ogloszenia/gabinety/wroclaw/` albo `/ogloszenia/praca/`. Na stronie ogłoszenia kliknięcie rodzaju albo miasta prowadzi właśnie tam.
+
+## Kontakt przy ogłoszeniu
+
+Ramka **Kontakt**:
+
+- Autor (albo osoba zarządzająca organizacją) widzi, na jaki adres przyjdą wiadomości. Sam do siebie nie pisze.
+- Zalogowana osoba z potwierdzonym e-mailem, która nie jest autorem, pisze treść i klika **Wyślij wiadomość**. Limit: 10 na godzinę na konto i 30 na godzinę z jednego adresu internetowego.
+- Gość — tylko gdy włączony jest Turnstile (patrz wyżej). Limit gościa: 3 na godzinę i 10 na dobę z jednego adresu.
+
+Po wysłaniu: „Wiadomość została wysłana do autora ogłoszenia.” Autor dostaje maila z imieniem, adresem i treścią. Odpowiedź to zwykła odpowiedź na tego maila. Gdy wysyłka maila się nie uda, wiadomość i tak zostaje zapisana u nas.
+
+Na pełnej wersji stare wiadomości są kasowane po 365 dniach (codzienne zadanie). Na demo tego zadania nie ma.
+
+## Zgłoszenie ogłoszenia
+
+Zalogowana osoba z potwierdzonym e-mailem, która nie jest autorem, na publicznym ogłoszeniu rozwija **Zgłoś ogłoszenie**. Wybiera powód:
+
+- spam lub reklama,
+- podejrzenie oszustwa,
+- treści nieodpowiednie lub nieetyczne,
+- nieaktualne ogłoszenie,
+- inny powód,
+
+dopisuje szczegóły i klika **Wyślij zgłoszenie**. Komunikat: „Dziękujemy, zgłoszenie trafi do moderacji.” Drugie zgłoszenie tego samego ogłoszenia przez tę samą osobę kończy się informacją, że już je zgłosiła. Limit: 10 zgłoszeń na godzinę.
+
+Trzy nierozpatrzone zgłoszenia od różnych osób ukrywają ogłoszenie samo. Znika z listy, dopóki moderator go nie przywróci.
+
+## Moderacja
+
+Moderator to osoba z uprawnieniem pracownika w panelu Django. Na pełnej wersji ten panel nie jest pod adresem `/admin/` — adres ustala się przy wdrożeniu i ma być nie do zgadnięcia. Na demo panel jest pod `/admin/`, ale nie ma gotowego konta moderatora (przykładowy administrator powstaje tylko przy lokalnym ładowaniu danych, nie na publicznym demo).
+
+Moderator może:
+
+- ukryć ogłoszenie albo je przywrócić (akcje „Ukryj zaznaczone” / „Przywróć zaznaczone”),
+- oznaczyć zgłoszenia jako rozpatrzone (samo oznaczenie nie przywraca ogłoszenia — ukrycie zdejmuje się osobno),
+- zablokować organizację (znika ona i jej ogłoszenia) albo profil specjalisty,
+- nadać organizacji odznakę **Zweryfikowana**,
+- dopisać członkostwo i rolę,
+- poprawiać słownik miast, specjalizacji i nurtów.
+
+Ogłoszenie idzie na stronę od razu po publikacji. Nikt go nie zatwierdza z góry.
+
+## Moje dane
+
+**Moje dane** (`/prywatnosc/moje-dane/`), tylko po zalogowaniu.
+
+**Pobierz dane** — plik JSON (konto, adresy e-mail, powiązane konta Google, profil, członkostwa, ogłoszenia, wysłane i odebrane wiadomości, zgłoszenia). Przycisk prosi o ponowne wpisanie hasła, jeśli logowanie było dawno. Limit: 5 pobrań na godzinę.
+
+**Usuń konto na zawsze** — wpisujesz swój e-mail (musi się zgadzać) i też musisz świeżo potwierdzić hasło. Kasowane są konto, profil, prywatne ogłoszenia i wysłane wiadomości. Ogłoszenia organizacji zostają przy organizacji.
+
+Gdy jesteś jedynym właścicielem, a w organizacji są inni ludzie i nie ma administratora, usunięcie się zatrzyma i poprosi, żeby najpierw nadać komuś rolę administratora (to robi moderator w panelu). Gdy administrator jest, zostaje właścicielem. Gdy jesteś sam w organizacji, organizacja znika razem z jej ogłoszeniami.
+
+## Regulamin i polityka
+
+Obie strony mają żółtą informację: „Wersja robocza. Ostateczną treść musi przygotować lub zatwierdzić prawnik przed publicznym startem.” W regulaminie i polityce są puste miejsca na dane administratora. Polityka mówi wprost, że serwis nie przetwarza danych o zdrowiu pacjentów. Ciasteczka to sesja logowania i ochrona formularzy. Analityki i reklam śledzących nie ma.
+
+## Demo pod adresem bartoszup-demo.onrender.com
+
+Żółty pasek jest na każdej stronie, także przy rejestracji.
+
+Przykłady (hasło każdego: `demo12345`):
+
+| E-mail | Kim jest na demo |
+| --- | --- |
+| `anna@example.com` | mgr Anna Kowalska, psychoterapeutka CBT, Wrocław, pracuje online. Jest zwykłą członkinią poradni — poradni nie edytuje i nie publikuje w jej imieniu. |
+| `piotr@example.com` | Właściciel „Centrum Psychologii Wrocław” (odznaka zweryfikowana) i administrator „Ośrodek Pomocy Społecznej – Mokotów”. Autor większości przykładowych ogłoszeń. |
+| `ola@example.com` | Studentka, Kraków, „szuka pracy”, ogłoszenie „Studentka psychologii szuka praktyk – Kraków”. |
+
+Przykładowe ogłoszenia, wszystkie opublikowane w chwili startu:
+
+- praca: psychoterapeuta, Kraków (prywatnie, Piotr),
+- praca: psycholog dziecięcy, Wrocław, poradnia, 6500–8500 zł miesięcznie,
+- praca: psycholog w OPS, Warszawa,
+- staż: praktyki z psychologii klinicznej, Wrocław, bezpłatne,
+- wolontariat: telefon zaufania, Warszawa, zdalnie,
+- „szukam pracy”: studentka, Kraków (Ola),
+- gabinet: centrum Wrocławia, 45 zł za godzinę, 14 m², wtorki i czwartki 16:00–21:00, soboty 9:00–15:00.
+
+Darmowa usługa Render zasypia, gdy nikt jej nie otwiera (na planie Free typowo po około 15 minutach). Pierwsze wejście potem czeka, aż proces wstanie. Render pokazuje wtedy własną stronę ładowania. Dysk się nie zachowuje: konta założone przez gości i nowe ogłoszenia znikają, a przykłady wgrywają się od nowa. Nie wpisuj tam prawdziwych nazwisk, telefonów ani służbowych adresów. Rejestracja zapisze to, co ktoś wpisze, ale tylko do najbliższego uśpienia.
+
+Na demo nie ma prawdziwej poczty, crona (codzienne wygaszanie i kasowanie starych wiadomości), bazy PostgreSQL, kluczy Turnstile ani konta moderatora.
+
+## Pełna wersja, która nie jest wdrożona
+
+Plik `render.yaml` opisuje późniejszy start we Frankfurcie: serwis strony, baza PostgreSQL i codzienne zadanie o 3:15 UTC (wygaszenie ogłoszeń po terminie, skasowanie wiadomości starszych niż rok, sprzątnięcie liczników limitów). Żeby to wstało, trzeba jeszcze podać pocztę, tajny adres panelu moderatora, klucze Turnstile (inaczej gość nie napisze do autora) i ewentualnie Google. Tego wdrożenia nie ma.
+
+Płatności (promowane ogłoszenia, wynajem z opłatą) i rezerwacja wizyt pacjentów są w planie na później. W tym kodzie ich nie ma — ani na demo, ani w pełnej wersji.
