@@ -1,8 +1,8 @@
 from typing import Any
 
+from allauth.account.decorators import verified_email_required
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import QuerySet
 from django.http import HttpRequest, HttpResponse
@@ -52,7 +52,7 @@ class SpecialistDetailView(DetailView[SpecialistProfile]):
         return context
 
 
-@login_required
+@verified_email_required
 def edit_own_profile(request: HttpRequest) -> HttpResponse:
     """Create or update the signed-in user's profile (one per user)."""
     user = require_user(request)

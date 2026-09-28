@@ -1,14 +1,16 @@
 from typing import Any
 
+from allauth.account.decorators import verified_email_required
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.db.models import QuerySet
 from django.http import HttpResponse, HttpResponseRedirect
+from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 from django.views.generic import CreateView, DetailView, UpdateView
 
 from apps.accounts.services import require_user
+from apps.core.ratelimit import ratelimit
 
 from .forms import OrganizationForm
 from .models import Organization
@@ -28,7 +30,8 @@ class OrganizationDetailView(DetailView[Organization]):
         return context
 
 
-class OrganizationCreateView(LoginRequiredMixin, CreateView[Organization, OrganizationForm]):
+@method_decorator([verified_email_required, ratelimit("organization_create")], name="dispatch")
+class OrganizationCreateView(CreateView[Organization, OrganizationForm]):
     form_class = OrganizationForm
     template_name = "organizations/organization_form.html"
 
@@ -39,7 +42,8 @@ class OrganizationCreateView(LoginRequiredMixin, CreateView[Organization, Organi
         return HttpResponseRedirect(self.object.get_absolute_url())
 
 
-class OrganizationUpdateView(LoginRequiredMixin, UpdateView[Organization, OrganizationForm]):
+@method_decorator(verified_email_required, name="dispatch")
+class OrganizationUpdateView(UpdateView[Organization, OrganizationForm]):
     form_class = OrganizationForm
     template_name = "organizations/organization_form.html"
     queryset = Organization.objects.all()

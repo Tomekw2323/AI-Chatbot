@@ -43,6 +43,9 @@ class EmailUserManager(UserManager["User"]):
 class User(AbstractUser):
     username = None  # type: ignore[assignment]
     email = models.EmailField(_("adres e-mail"), unique=True)
+    terms_accepted_at = models.DateTimeField(
+        _("akceptacja regulaminu i polityki prywatności"), null=True, blank=True
+    )
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS: ClassVar[list[str]] = []

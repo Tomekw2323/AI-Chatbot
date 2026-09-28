@@ -83,3 +83,55 @@ def test_list_and_htmx_partial(client) -> None:
     assert b"Terapia par" in full.content
     assert b"<html" in full.content
     assert b"<html" not in partial.content
+
+
+def test_detail_shows_edit_link_only_to_owner(client) -> None:
+    profile = SpecialistProfileFactory.create()
+    edit_url = reverse("profiles:edit")
+    assert edit_url not in client.get(profile.get_absolute_url()).content.decode()
+    client.force_login(profile.user)
+    assert edit_url in client.get(profile.get_absolute_url()).content.decode()
+
+
+def test_invalid_profile_form_is_redisplayed(client) -> None:
+    user = UserFactory.create()
+    client.force_login(user)
+    response = client.post(
+        reverse("profiles:edit"), {"first_name": "Ewa", "website": "javascript:alert(1)"}
+    )
+    assert response.status_code == 200
+    assert "website" in response.context["form"].errors
+    assert not SpecialistProfile.objects.filter(user=user).exists()
+
+
+def test_unverified_user_cannot_create_profile(client) -> None:
+    user = UserFactory.create(verified=False)
+    client.force_login(user)
+    client.post(
+        reverse("profiles:edit"),
+        {"first_name": "A", "last_name": "B", "profession": "psychologist", "headline": "x"},
+    )
+    assert not SpecialistProfile.objects.filter(user=user).exists()
+
+
+def test_bio_is_escaped(client) -> None:
+    profile = SpecialistProfileFactory.create(bio="<script>alert(1)</script>")
+    content = client.get(profile.get_absolute_url()).content.decode()
+    assert "<script>alert(1)" not in content
+    assert "&lt;script&gt;" in content
+
+
+def test_text_search() -> None:
+    match = SpecialistProfileFactory.create(headline="Terapia uzależnień")
+    SpecialistProfileFactory.create(headline="Psychologia dziecięca")
+    qs = SpecialistProfileFilter({"q": "uzależ"}, queryset=SpecialistProfile.objects.all()).qs
+    assert list(qs) == [match]
+
+
+def test_edit_page_is_prefilled_for_existing_profile(client) -> None:
+    profile = SpecialistProfileFactory.create(headline="Mój nagłówek")
+    client.force_login(profile.user)
+    response = client.get(reverse("profiles:edit"))
+    assert response.status_code == 200
+    assert response.context["form"].instance == profile
+    assert "Mój nagłówek" in response.content.decode()
