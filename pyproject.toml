@@ -5,7 +5,7 @@ description = "Platforma dla branży zdrowia psychicznego: oferty pracy, staże,
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "django>=5.2,<5.3",
+    "django>=5.2,<6.2",
     "django-allauth[socialaccount]>=65.19.4",
     "django-csp>=4.0",
     "django-environ>=0.14.0",
