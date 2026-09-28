@@ -1,7 +1,8 @@
 # syntax=docker/dockerfile:1
 
 # ---------------------------------------------------------------------------
-# base: Python + uv
+# base: Python + uv. The virtualenv lives outside /app so that bind-mounting the
+# source in docker-compose neither hides it nor creates a root-owned .venv on the host.
 # ---------------------------------------------------------------------------
 FROM python:3.13-slim AS base
 COPY --from=ghcr.io/astral-sh/uv:0.12 /uv /usr/local/bin/uv
@@ -9,8 +10,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \
-    UV_PROJECT_ENVIRONMENT=/app/.venv \
-    PATH="/app/.venv/bin:$PATH"
+    UV_PROJECT_ENVIRONMENT=/opt/venv \
+    PATH="/opt/venv/bin:$PATH"
 WORKDIR /app
 
 # ---------------------------------------------------------------------------
@@ -42,11 +43,12 @@ RUN DJANGO_SETTINGS_MODULE=config.settings.prod \
 FROM python:3.13-slim AS prod
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PATH="/app/.venv/bin:$PATH" \
+    PATH="/opt/venv/bin:$PATH" \
     DJANGO_SETTINGS_MODULE=config.settings.prod \
     PORT=8000
 RUN useradd --create-home --uid 1000 app
 WORKDIR /app
+COPY --from=build /opt/venv /opt/venv
 COPY --from=build --chown=app:app /app /app
 USER app
 EXPOSE 8000
