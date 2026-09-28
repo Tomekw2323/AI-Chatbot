@@ -1,0 +1,25 @@
+---
+description: Conventions for Django models, services, views, forms and admin
+globs: apps/**/*.py,config/**/*.py
+alwaysApply: false
+---
+
+# Django backend conventions
+
+- FKs to users: `settings.AUTH_USER_MODEL`. In code: `apps.accounts.models.User`.
+- Login-only views: decorate with `login_required` / `LoginRequiredMixin`, then get the user
+  with `apps.accounts.services.require_user(request)` (typed, no `assert`).
+- Visibility: always use `.public()` querysets (`Listing`, `SpecialistProfile`, `Organization`).
+- Listing status only via `Listing.publish()`, `.archive()`, `.expire()`; handle
+  `InvalidTransitionError`.
+- Object permissions: `apps.listings.permissions.*`, `apps.organizations.services.can_manage_organization`.
+  Deny with `PermissionDenied` (403) for edit actions, `Http404` for invisible content.
+- Invariants: `Model.clean()` for user-facing validation plus `CheckConstraint`/`UniqueConstraint`
+  for things that must never break.
+- Choices: `models.TextChoices`, English values, Polish `_()` labels.
+- Slugs: `apps.core.text.slugify_pl` / `unique_slug`.
+- Type hints on all functions (mypy `disallow_untyped_defs`). Generic Django classes are
+  subscriptable (`admin.ModelAdmin[Listing]`, `forms.ModelForm[Listing]`) thanks to
+  `django_stubs_ext.monkeypatch()` in settings.
+- Keep views thin; multi-object logic and side effects (email) belong in `services.py`.
+- Admin is the moderation tool: add `list_filter`, `search_fields`, `autocomplete_fields`.

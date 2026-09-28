@@ -1,0 +1,18 @@
+---
+description: Conventions for Django templates, HTMX and Tailwind
+globs: templates/**/*.html,templates/**/*.txt,assets/**/*.css,static/js/**/*.js
+alwaysApply: false
+---
+
+# Templates, HTMX, Tailwind
+
+- Extend `base.html`; fill `title`, `meta_description`, `content` blocks.
+- Every user-facing string: `{% translate "…" %}` or `{% blocktranslate %}` (Polish source).
+- Tailwind utilities + shared classes from `assets/css/source.css`
+  (`btn-primary`, `btn-secondary`, `btn-danger`, `card`, `badge`, `link`, `checkbox-grid`).
+  Add new shared styles there, not inline `<style>`.
+- Forms: `{{ field.as_field_group }}` or `{% include "includes/form_fields.html" with form=… %}`.
+- HTMX: partials are named `_something.html`; views return the partial when `request.htmx`.
+  Pages must still work without JavaScript (plain GET/POST fallback).
+- Lower-module pages that show listings use `{% load listing_tags %}` inclusion tags.
+- No Node/npm; no CDN scripts (vendor files into `static/vendor/`).

@@ -1,0 +1,18 @@
+---
+description: How to write tests in this project
+globs: apps/**/tests/**/*.py
+alwaysApply: false
+---
+
+# Tests
+
+- pytest + pytest-django + factory_boy; PostgreSQL only (`docker compose up -d db`).
+- Mark DB tests with `pytestmark = pytest.mark.django_db`.
+- Use factories from `apps/<app>/tests/factories.py` via `Factory.create(...)` or
+  `Factory.build(...)` (typed return values). `ListingFactory.create(published=True)` and
+  `room=True` traits exist.
+- Every permission rule: one allowed and one denied test. Every filter: a test proving it narrows
+  results. Every lifecycle transition: valid and invalid cases.
+- Use the `client` fixture and `client.force_login(user)` for view tests; assert status codes and
+  `response.context`, not HTML details.
+- Emails: `django.core.mail.outbox` (locmem backend in test settings).
