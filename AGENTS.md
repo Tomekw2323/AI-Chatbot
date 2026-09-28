@@ -17,15 +17,15 @@ uv run ruff format . && uv run ruff check .   # format + lint
 uv run mypy .                                  # types
 uv run lint-imports                            # module boundaries
 uv run python manage.py makemigrations --check --dry-run
-uv run pytest                                  # needs Postgres: docker compose up -d db
+uv run pytest --cov                            # needs Postgres; fails below the coverage floor
 ```
 
-All five must pass. CI runs the same.
+All five must pass. CI runs the same, plus `pip-audit`.
 
 ## Architecture rules (hard)
 
 - Modular monolith. Apps and allowed import direction:
-  `listings` → `profiles | organizations` → `accounts` → `core`.
+  `privacy` → `listings` → `profiles | organizations` → `accounts` → `core`.
   `profiles` and `organizations` never import each other. Enforced by import-linter.
 - Cross-app calls go through the lower app's `services.py` (e.g.
   `organizations.services.can_manage_organization`). Do not query another app's internals.
@@ -72,8 +72,19 @@ All five must pass. CI runs the same.
 - Every permission rule needs an allowed **and** a denied test. Every new filter needs a test.
 - Tests run on PostgreSQL, never SQLite.
 
-## Security and GDPR
+## Security and GDPR (read docs/security.md)
 
+- Every view that changes data: `require_POST`, an object-level permission check
+  (403 for edit actions, 404 for invisible objects), and a test for allowed **and** denied users.
+- Publishing or contacting requires a verified email: `allauth.account.decorators.verified_email_required`.
+- Abuse-prone POSTs get `@ratelimit("<scope>")` from `apps.core.ratelimit` with the rate in
+  `settings.RATE_LIMITS`, plus a test that the limit returns 429.
+- Never use `|safe`, `mark_safe` or `{% autoescape off %}` in HTML templates (a test enforces it).
+  User content is plain text. Redirect targets from input go through `url_has_allowed_host_and_scheme`.
+- No inline `<script>` or `on*=` handlers: the CSP blocks them. New external origins must be added
+  to `CONTENT_SECURITY_POLICY` deliberately.
+- Forms list fields explicitly; never expose moderation or ownership fields.
+- New personal data: include it in `apps/privacy/services.py` export and deletion, with tests.
 - No secrets in code; configuration via environment variables (`.env.example` documents them).
 - Do not log personal data (emails, messages). No health data in the MVP.
 - Anything that stores new personal data: note it in the PR and consider retention.

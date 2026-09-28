@@ -27,6 +27,7 @@ docker compose exec web python manage.py createsuperuser  # admin at /admin/
 ```
 
 Open <http://localhost:8000> (app) and <http://localhost:8025> (Mailpit, all outgoing email).
+The admin is at `/admin/` locally; production uses a secret path (`DJANGO_ADMIN_URL`).
 Demo users (after `seed_demo`): `anna@example.com`, `piotr@example.com`, `admin@example.com`, password `demo12345`.
 
 ### Without Docker for the app (faster feedback loop)
@@ -48,10 +49,12 @@ uv run python manage.py tailwind runserver  # Django dev server + Tailwind watch
 | Module boundaries | `uv run lint-imports` |
 | All pre-commit hooks | `uv run pre-commit run --all-files` |
 | New migrations | `uv run python manage.py makemigrations` |
-| Expire old listings | `uv run python manage.py expire_listings` (daily cron in prod) |
+| Daily maintenance | `uv run python manage.py daily_maintenance` (cron in prod) |
+| Dependency audit | `uv run pip-audit` |
 
-CI (GitHub Actions, `.github/workflows/ci.yml`) runs the same lint, type, boundary, migration and
-test checks, plus a production Docker build.
+CI (GitHub Actions, `.github/workflows/ci.yml`) runs the same lint (incl. bandit security rules),
+type, boundary, migration and test checks with a coverage floor, a dependency audit, and a
+production Docker build.
 
 ## Tech stack
 
@@ -69,7 +72,8 @@ apps/
   accounts/           Custom User (email login), signup form
   organizations/      Organizations (clinics, NGOs, OPS...) and memberships with roles
   profiles/           Specialist profiles ("wizytówki")
-  listings/           Listings (5 kinds), lifecycle, moderation, inquiries, home + dashboard
+  listings/           Listings (5 kinds), lifecycle, moderation, reports, inquiries, home + dashboard
+  privacy/            GDPR: data export, account deletion, terms and privacy policy pages
 templates/            Server-rendered HTML (Tailwind classes, HTMX partials start with "_")
 assets/css/           Tailwind source; compiled to static/css/tailwind.css (git-ignored)
 static/               Vendored JS (HTMX) and small page scripts
@@ -85,6 +89,7 @@ apps), `permissions.py` where relevant, `forms.py`, `filters.py`, `views.py`, `u
 - [Architecture](docs/architecture.md): context and container diagrams, module boundaries
 - [Domain model](docs/domain-model.md): ER diagram, listing lifecycle, moderation
 - [Roadmap](docs/roadmap.md) (PL): phases 1–3
+- [Security](docs/security.md): threat model, controls, known gaps
 - [Deployment](docs/deployment.md): Render (EU/Frankfurt) setup, env vars, GDPR notes
 - [ADRs](docs/adr/): architecture decision records
 - [CONTRIBUTING.md](CONTRIBUTING.md): branching, commits, PR flow

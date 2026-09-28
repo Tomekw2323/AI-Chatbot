@@ -36,14 +36,17 @@ flowchart TB
 
     subgraph host["Render, region Frankfurt (EU)"]
         web["Web service<br/>Django 5.2 + gunicorn<br/>WhiteNoise serves static files"]
-        cron["Cron job<br/>manage.py expire_listings (daily)"]
+        cron["Cron job<br/>manage.py daily_maintenance"]
         db[("PostgreSQL 17<br/>managed")]
     end
 
     smtp["SMTP provider (EU)"]
     google["Google OAuth"]
+    turnstile["Cloudflare Turnstile"]
 
     browser -- "HTTPS" --> web
+    browser -- "guest challenge" --> turnstile
+    web -- "verify token" --> turnstile
     web -- "SQL" --> db
     cron -- "SQL" --> db
     web -- "SMTP" --> smtp
@@ -62,12 +65,14 @@ require it.
 
 ```mermaid
 flowchart TD
+    privacy["privacy<br/>GDPR data export, account deletion,<br/>terms and privacy policy pages"]
     listings["listings<br/>listings, lifecycle, moderation, inquiries,<br/>home page, dashboard"]
     profiles["profiles<br/>specialist profiles"]
     organizations["organizations<br/>organizations, memberships, permissions"]
     accounts["accounts<br/>User (email login), signup"]
     core["core<br/>cities, voivodeships, specializations,<br/>therapy approaches, shared helpers"]
 
+    privacy --> listings
     listings --> profiles
     listings --> organizations
     profiles --> accounts
@@ -80,8 +85,9 @@ flowchart TD
 
 Rules (enforced by **import-linter**, contract in `pyproject.toml`, run in CI and pre-commit):
 
-1. An app may import only from apps **below** it: `listings` → `profiles | organizations` →
-   `accounts` → `core`.
+1. An app may import only from apps **below** it: `privacy` → `listings` →
+   `profiles | organizations` → `accounts` → `core`. `privacy` is on top because erasure and
+   export must see every module's personal data.
 2. `profiles` and `organizations` are **independent** siblings; neither imports the other.
 3. Cross-module calls go through the lower module's **`services.py`** (e.g.
    `organizations.services.can_manage_organization`), not through its internal queries.
@@ -113,7 +119,9 @@ the same `services.py` functions, turned into an API.
   optional Google login (enabled when `GOOGLE_CLIENT_ID/SECRET` are set). See ADR 0008.
 - **Authorization**: object-level checks in `permissions.py`/`services.py`. Organization owners
   and admins manage the organization and all its listings; plain members do not.
-- **Moderation**: post-moderation in Django admin. `Listing.is_flagged`,
+- **Security**: see [security.md](security.md) (threat model, OWASP Top 10 controls, rate limits,
+  CSP). Verified email is required before publishing or contacting; guests use Turnstile.
+- **Moderation**: post-moderation in Django admin, user reports with auto-hide (ADR 0012). `Listing.is_flagged`,
   `Organization.is_blocked`, `SpecialistProfile.is_blocked` hide content from public pages.
 - **SEO**: server-rendered pages, canonical URLs, `/ogloszenia/<kind>/<city>/` landing pages
   (e.g. `/ogloszenia/gabinety/wroclaw/`), `sitemap.xml`, `robots.txt`, Polish slugs

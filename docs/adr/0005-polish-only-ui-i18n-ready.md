@@ -1,6 +1,6 @@
 # 0005. Polish-only UI, i18n-ready
 
-- Status: Proposed – awaiting developer review
+- Status: Accepted (2026-09-28, decided by the technical lead on behalf of the owner; the supervising developer may supersede it)
 - Date: 2026-09-28
 
 ## Context
@@ -22,5 +22,6 @@ specialists) are plausible later. Code must be readable by any developer.
 
 - No translation step during the MVP; third-party apps (Django, allauth) already ship Polish.
 - If English becomes the primary language later, msgids would need converting (scriptable).
-  **Open question for review:** switch to English msgids + a Polish `.po` file now instead?
+- Reviewed 2026-09-28: kept. English msgids would add a translation step to every UI change
+  for a product with one market; the conversion cost later is bounded and scriptable.
 - Translated URLs (`i18n_patterns`) are not used; add them only if a second language appears.

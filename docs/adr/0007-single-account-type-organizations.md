@@ -1,6 +1,6 @@
 # 0007. One account type; organizations with memberships
 
-- Status: Proposed – awaiting developer review
+- Status: Accepted (2026-09-28, decided by the technical lead on behalf of the owner; the supervising developer may supersede it)
 - Date: 2026-09-28
 
 ## Context

@@ -8,11 +8,15 @@ alwaysApply: true
 Read `AGENTS.md` for full conventions. Key points:
 
 - Django 5.2 modular monolith. Import direction (enforced by import-linter):
-  `apps.listings` → `apps.profiles | apps.organizations` → `apps.accounts` → `apps.core`.
+  `apps.privacy` → `apps.listings` → `apps.profiles | apps.organizations` → `apps.accounts` → `apps.core`.
   `profiles` and `organizations` never import each other.
 - Cross-app calls only via the lower app's `services.py`; permissions in `permissions.py`.
 - Code/comments/commits in English; user-facing strings in Polish wrapped in gettext.
 - No patient/health data features without an explicit task and ADR (GDPR art. 9).
+- Security rules (docs/security.md): POST-only state changes with object-level permission checks,
+  `verified_email_required` for publishing/contacting, `@ratelimit(scope)` on abuse-prone POSTs,
+  no `|safe`/inline scripts (CSP), explicit form fields, new personal data covered by
+  `apps/privacy` export + deletion. Every control gets allowed/denied tests.
 - Before finishing: `uv run ruff format . && uv run ruff check . && uv run mypy . && uv run lint-imports && uv run pytest`.
 - Model change ⇒ migration in the same commit + update `docs/domain-model.md`.
 - Significant decision ⇒ new ADR in `docs/adr/`.

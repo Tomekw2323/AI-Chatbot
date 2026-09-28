@@ -21,13 +21,20 @@ Cel: zastąpić grupę na Facebooku jednym, przeszukiwalnym miejscem.
 - Cykl życia ogłoszenia: szkic → opublikowane → wygasłe (po 60 dniach) → archiwum.
 - Moderacja w panelu administratora: ukrywanie ogłoszeń, blokowanie organizacji i profili,
   weryfikacja organizacji.
-- Kontakt: formularz wiadomości do autora ogłoszenia (e-mail z możliwością odpowiedzi).
+- Kontakt: formularz wiadomości do autora ogłoszenia (e-mail z możliwością odpowiedzi); goście
+  mogą pisać bez konta po weryfikacji Cloudflare Turnstile.
+- Bezpieczeństwo: wymagany potwierdzony e-mail przed publikacją, limity prób (logowanie,
+  rejestracja, wiadomości, ogłoszenia), przycisk „zgłoś ogłoszenie” z automatycznym ukrywaniem,
+  nagłówki bezpieczeństwa i CSP, ukryty adres panelu administratora (szczegóły:
+  [security.md](security.md)).
+- RODO: robocze wersje regulaminu i polityki prywatności, zgoda przy rejestracji, pobranie
+  swoich danych i usunięcie konta, automatyczne usuwanie starych wiadomości.
 
 **Do zrobienia przed publicznym startem:**
 
-- Regulamin, polityka prywatności, zgody RODO przy rejestracji, strona „kontakt”.
+- Ostateczna treść regulaminu i polityki prywatności od prawnika, strona „kontakt”.
 - Domena, konto na Render (Frankfurt), dostawca e-maili w UE, klucze Google OAuth.
-- Przycisk „zgłoś ogłoszenie” i prosty limit wiadomości (ochrona przed spamem).
+- Logowanie dwuetapowe (MFA) dla moderatorów, adres do zgłaszania błędów bezpieczeństwa.
 - Zdjęcia (logo organizacji, zdjęcie profilowe, zdjęcia gabinetu) – wymaga magazynu plików w UE
   (np. S3-kompatybilny w regionie UE).
 - Zaproszenia członków do organizacji z poziomu strony (dziś: przez panel administratora).

@@ -1,6 +1,6 @@
 # 0008. Authentication with django-allauth (email + Google)
 
-- Status: Proposed – awaiting developer review
+- Status: Accepted (2026-09-28, decided by the technical lead on behalf of the owner; the supervising developer may supersede it)
 - Date: 2026-09-28
 
 ## Context

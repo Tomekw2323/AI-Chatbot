@@ -1,6 +1,6 @@
 # 0006. One `Listing` table for all listing kinds
 
-- Status: Proposed – awaiting developer review
+- Status: Accepted (2026-09-28, decided by the technical lead on behalf of the owner; the supervising developer may supersede it)
 - Date: 2026-09-28
 
 ## Context
@@ -25,6 +25,8 @@ availability is a child table `RoomAvailabilityBlock`.
 
 - One queryset, one filter, one list template, one moderation queue, no joins for listing pages.
 - Some columns are empty for some kinds (a few nullable columns is cheap in Postgres).
+- Reviewed 2026-09-28: kept for Phase 1. The trigger to split is the Phase 2 room calendar
+  (bookable slots, payments), which will get its own `rooms`/`bookings` module anyway.
 - If room rental grows much richer (Phase 2 calendar, bookings, payments), extract it to a
   `rooms` module with its own model referencing `Listing` or replacing it for that kind. The
   `kind` field and module boundaries keep that migration contained.

@@ -41,8 +41,9 @@ uv run pre-commit install
 
 1. Open a PR against `main` early (draft is fine). Fill in the template: what, why, how tested,
    screenshots for UI changes.
-2. CI must be green: ruff (format + lint), mypy, import-linter, missing-migrations check,
-   `check --deploy`, pytest on PostgreSQL, production Docker build.
+2. CI must be green: ruff (format + lint incl. security rules), mypy, import-linter,
+   missing-migrations check, `check --deploy`, pytest on PostgreSQL with the coverage floor,
+   pip-audit, production Docker build.
 3. At least one review by the supervising developer. AI-generated PRs get the same review.
 4. Squash-merge with a Conventional Commit title; delete the branch.
 
@@ -53,6 +54,9 @@ uv run pre-commit install
 - [ ] New user-facing strings wrapped in gettext, Polish source text
 - [ ] Migrations included, reversible, and safe for existing data
 - [ ] No personal data in logs; no secrets in code; GDPR impact considered for new data fields
+- [ ] New personal data included in `apps/privacy` export and account deletion
+- [ ] State-changing views are POST-only, permission-checked, rate limited where abusable
+- [ ] No `|safe`, inline scripts or new external origins without a CSP update
 - [ ] Significant decision? Add an ADR in `docs/adr/`
 - [ ] Docs updated (`docs/domain-model.md` for model changes)
 

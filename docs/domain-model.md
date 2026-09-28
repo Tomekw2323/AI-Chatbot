@@ -11,7 +11,9 @@ erDiagram
     ORGANIZATION |o--o{ LISTING : "published on behalf of"
     LISTING ||--o{ ROOM_AVAILABILITY_BLOCK : "room rentals only"
     LISTING ||--o{ INQUIRY : "receives"
-    USER |o--o{ INQUIRY : "sends"
+    USER |o--o{ INQUIRY : "sends (null for guests)"
+    LISTING ||--o{ LISTING_REPORT : "reported by"
+    USER |o--o{ LISTING_REPORT : "reports"
 
     VOIVODESHIP ||--o{ CITY : "contains"
     CITY ||--o{ ORGANIZATION : "located in"
@@ -28,6 +30,7 @@ erDiagram
         string last_name
         bool is_active
         bool is_staff "moderators"
+        datetime terms_accepted_at "consent record"
     }
     ORGANIZATION {
         bigint id PK
@@ -102,11 +105,20 @@ erDiagram
     INQUIRY {
         bigint id PK
         bigint listing_id FK
-        bigint sender_id FK "nullable (SET NULL)"
+        bigint sender_id FK "nullable: guest or deleted account"
+        string sender_name
         string sender_email
         string recipient_email
         text message
         bool email_sent
+    }
+    LISTING_REPORT {
+        bigint id PK
+        bigint listing_id FK
+        bigint reporter_id FK "unique per listing"
+        enum reason "spam | fraud | inappropriate | outdated | other"
+        text message
+        bool is_resolved
     }
     VOIVODESHIP {
         bigint id PK
@@ -135,6 +147,8 @@ erDiagram
 ```
 
 All non-reference tables also have `created_at` / `updated_at` (`core.TimeStampedModel`).
+Technical tables not shown: `core.RateLimitCounter` (rate-limit windows, ADR 0014) and the
+`django_cache` table (database cache).
 
 ## Key decisions
 
@@ -179,8 +193,10 @@ work in `/admin/`:
   `Organization.is_verified` shows a "verified" badge.
 - `SpecialistProfile.is_blocked` hides a profile.
 
-A user-facing "report this listing" button and a pre-moderation mode for new accounts are on the
-roadmap.
+Users with a verified email can **report** a listing (one report per user and listing). After
+`LISTING_REPORTS_AUTO_FLAG` (default 3) open reports the listing is hidden automatically until
+a moderator resolves the reports (ADR 0012). A pre-moderation mode for new accounts is on the
+roadmap if abuse appears.
 
 ## Permissions
 
@@ -188,11 +204,13 @@ roadmap.
 | --- | --- |
 | View public listing / profile / organization | Everyone |
 | View draft/expired/flagged listing | Author, owners/admins of its organization |
-| Create listing | Any signed-in user (for an organization: only its owner/admin) |
-| Edit / publish / archive listing | Author, owners/admins of its organization |
-| Send inquiry | Signed-in users, only for publicly visible listings that are not their own |
-| Edit organization | Its owners/admins |
-| Edit specialist profile | Its user |
+| Create listing | Signed-in user with verified email (for an organization: only its owner/admin) |
+| Edit / publish / archive / delete listing | Author, owners/admins of its organization (verified email) |
+| Send inquiry | Verified users (not the author), or guests passing Turnstile; publicly visible listings only |
+| Report listing | Verified users (not the author), publicly visible listings only |
+| Create / edit organization | Verified user / its owners/admins |
+| Edit specialist profile | Its user (verified email) |
+| Export data / delete account | The user, after recent re-authentication |
 | Moderate | Staff (Django admin) |
 
 Code: `apps/listings/permissions.py`, `apps/organizations/services.py`. Tests:
