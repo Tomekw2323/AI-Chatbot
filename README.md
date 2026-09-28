@@ -7,7 +7,7 @@
 
 ## Podgląd
 
-To podgląd lokalny, a nie działająca strona; przykładowe ogłoszenia nie znajdują się w bazie danych wdrożonego serwera.
+Zrzuty poniżej są z lokalnego uruchomienia. Darmowy adres do przeklikania powstaje z pliku `render.demo.yaml` (jedna darmowa usługa Docker, bez bazy i bez crona). Płatny start zostaje w `render.yaml` i nie służy do tego podglądu. To nie jest publiczne uruchomienie.
 
 ![strona główna](docs/preview/preview-home.png)
 
