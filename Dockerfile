@@ -4,7 +4,7 @@
 # base: Python + uv. The virtualenv lives outside /app so that bind-mounting the
 # source in docker-compose neither hides it nor creates a root-owned .venv on the host.
 # ---------------------------------------------------------------------------
-FROM python:3.13-slim AS base
+FROM python:3.14-slim AS base
 COPY --from=ghcr.io/astral-sh/uv:0.12 /uv /usr/local/bin/uv
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -41,7 +41,7 @@ RUN DJANGO_SETTINGS_MODULE=config.settings.prod \
 # ---------------------------------------------------------------------------
 # prod: slim runtime image, non-root user
 # ---------------------------------------------------------------------------
-FROM python:3.13-slim AS prod
+FROM python:3.14-slim AS prod
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PATH="/opt/venv/bin:$PATH" \
